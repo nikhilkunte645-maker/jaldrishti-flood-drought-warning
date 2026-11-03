@@ -15,9 +15,11 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     f1_score,
+    fbeta_score,
     roc_auc_score,
     confusion_matrix,
 )
+from sklearn.linear_model import LogisticRegression
 from xgboost import XGBClassifier
 
 import sys
@@ -62,6 +64,11 @@ def train_and_evaluate_models():
 
     # 2. Engineer features and targets
     df_modeled = prepare_modeling_dataset(df_all, thresholds)
+
+    # Compute Antecedent Precipitation Index (API-3: weighted 3-day rainfall)
+    df_modeled["precip_lag1"] = df_modeled.groupby("district_slug")["precip_mm"].shift(1).fillna(0.0)
+    df_modeled["precip_lag2"] = df_modeled.groupby("district_slug")["precip_mm"].shift(2).fillna(0.0)
+    df_modeled["api_3"] = df_modeled["precip_mm"] + 0.8 * df_modeled["precip_lag1"] + 0.6 * df_modeled["precip_lag2"]
 
     # 3. Time-based split: Train (2015-2021), Test (2022-2025)
     train_mask = df_modeled["date"] <= "2021-12-31"
@@ -130,6 +137,7 @@ def train_and_evaluate_models():
         prec = precision_score(y_test, preds, zero_division=0)
         rec = recall_score(y_test, preds, zero_division=0)
         f1 = f1_score(y_test, preds, zero_division=0)
+        f2 = fbeta_score(y_test, preds, beta=2, zero_division=0)
         auc = roc_auc_score(y_test, probs) if len(np.unique(y_test)) > 1 else 0.5
 
         # Compute Naive Baseline Metrics
@@ -138,14 +146,30 @@ def train_and_evaluate_models():
         b_prec = precision_score(y_test, naive_preds, zero_division=0)
         b_rec = recall_score(y_test, naive_preds, zero_division=0)
         b_f1 = f1_score(y_test, naive_preds, zero_division=0)
+        b_f2 = fbeta_score(y_test, naive_preds, beta=2, zero_division=0)
 
-        # Record metrics for both
+        # Secondary Benchmark: Antecedent Precipitation Index (API-3 Linear Benchmark)
+        lr_api = LogisticRegression(class_weight="balanced", random_state=42)
+        lr_api.fit(train_h[["api_3"]], y_train)
+        api_probs = lr_api.predict_proba(test_h[["api_3"]])[:, 1]
+        api_preds = (api_probs >= 0.5).astype(int)
+
+        api_cm = confusion_matrix(y_test, api_preds, labels=[0, 1])
+        api_tn, api_fp, api_fn, api_tp = api_cm.ravel() if api_cm.size == 4 else (0, 0, 0, 0)
+        api_prec = precision_score(y_test, api_preds, zero_division=0)
+        api_rec = recall_score(y_test, api_preds, zero_division=0)
+        api_f1 = f1_score(y_test, api_preds, zero_division=0)
+        api_f2 = fbeta_score(y_test, api_preds, beta=2, zero_division=0)
+        api_auc = roc_auc_score(y_test, api_probs) if len(np.unique(y_test)) > 1 else 0.5
+
+        # Record metrics for all models
         metrics_records.append({
             "Horizon": h,
             "Model": "XGBoost (JalDrishti)",
             "Precision": round(float(prec), 4),
             "Recall": round(float(rec), 4),
             "F1-Score": round(float(f1), 4),
+            "F2-Score": round(float(f2), 4),
             "ROC-AUC": round(float(auc), 4),
             "False Alarms (FP)": int(fp),
             "Missed Events (FN)": int(fn),
@@ -159,11 +183,26 @@ def train_and_evaluate_models():
             "Precision": round(float(b_prec), 4),
             "Recall": round(float(b_rec), 4),
             "F1-Score": round(float(b_f1), 4),
+            "F2-Score": round(float(b_f2), 4),
             "ROC-AUC": 0.5,
             "False Alarms (FP)": int(b_fp),
             "Missed Events (FN)": int(b_fn),
             "True Positives (TP)": int(b_tp),
             "True Negatives (TN)": int(b_tn),
+        })
+
+        metrics_records.append({
+            "Horizon": h,
+            "Model": "API-3 Linear Benchmark",
+            "Precision": round(float(api_prec), 4),
+            "Recall": round(float(api_rec), 4),
+            "F1-Score": round(float(api_f1), 4),
+            "F2-Score": round(float(api_f2), 4),
+            "ROC-AUC": round(float(api_auc), 4),
+            "False Alarms (FP)": int(api_fp),
+            "Missed Events (FN)": int(api_fn),
+            "True Positives (TP)": int(api_tp),
+            "True Negatives (TN)": int(api_tn),
         })
 
         # Add predictions to test_preds_df

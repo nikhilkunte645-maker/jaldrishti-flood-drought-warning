@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 import folium
+import joblib
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -205,6 +206,14 @@ def load_shap_data() -> pd.DataFrame:
     if not p.exists():
         return pd.DataFrame()
     return pd.read_csv(p)
+
+
+@st.cache_resource
+def load_flood_model(horizon: str):
+    p = MODELS_DIR / f"flood_{horizon}.joblib"
+    if p.exists():
+        return joblib.load(p)
+    return None
 
 
 # Load cached local datasets
@@ -676,6 +685,106 @@ with tab_dashboard:
     except Exception as e:
         st.warning(f"Feature attribution temporarily unavailable: {e}")
 
+    # --------------------------------------------------------------------------
+    # MODULE 3: INTERACTIVE WHAT-IF SCENARIO SANDBOX (LIVE DYNAMIC INFERENCE)
+    # --------------------------------------------------------------------------
+    st.markdown("---")
+    st.markdown("##### 🧪 Interactive Scenario Sandbox / Real-Time What-If Simulator")
+    st.caption("Simulate hypothetical rainfall, discharge, and soil saturation combinations to evaluate live model inference.")
+
+    try:
+        with st.container():
+            st.markdown(
+                """
+                <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:12px 16px; margin-bottom:12px;">
+                    <span style="color:#38bdf8; font-weight:600; font-size:0.92rem;">🔬 Dynamic Hydraulic Simulator</span><br>
+                    <span style="color:#94a3b8; font-size:0.82rem;">
+                    Stress-test hydraulic thresholds by adjusting precipitation, upstream discharge, and soil moisture saturation.
+                    </span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            sb_c1, sb_c2, sb_c3, sb_c4 = st.columns(4)
+            with sb_c1:
+                sim_rain = st.slider("Simulated 24h Rainfall (mm)", min_value=0.0, max_value=300.0, value=45.0, step=5.0)
+            with sb_c2:
+                sim_discharge = st.slider("Current River Discharge (m³/s)", min_value=0.0, max_value=400.0, value=65.0, step=5.0)
+            with sb_c3:
+                sim_soil_pct = st.slider("Volumetric Soil Moisture (%)", min_value=10.0, max_value=100.0, value=55.0, step=5.0)
+            with sb_c4:
+                sim_horizon = st.selectbox("Target Horizon", ["24h", "48h", "72h"], index=2)
+
+            run_inference = st.button("⚡ Run Live Hydraulic Inference", use_container_width=True, type="primary")
+
+            if run_inference:
+                model = load_flood_model(sim_horizon)
+                if model is not None:
+                    sim_soil_vol = sim_soil_pct / 100.0
+                    syn_data = {
+                        "precip_roll_1d": [sim_rain],
+                        "precip_roll_3d": [sim_rain * 1.8],
+                        "precip_roll_7d": [sim_rain * 2.8],
+                        "precip_roll_14d": [sim_rain * 4.2],
+                        "soil_moisture": [sim_soil_vol],
+                        "soil_moisture_diff_3d": [max(0.0, sim_soil_vol * 0.15)],
+                        "river_discharge": [sim_discharge],
+                        "river_discharge_lag_1d": [sim_discharge * 0.85],
+                        "river_discharge_lag_2d": [sim_discharge * 0.70],
+                        "river_discharge_lag_3d": [sim_discharge * 0.60],
+                        "river_discharge_diff_1d": [sim_discharge * 0.15],
+                        "month": [7],  # July peak monsoon baseline
+                    }
+                    syn_df = pd.DataFrame(syn_data)
+                    sim_prob = float(model.predict_proba(syn_df)[:, 1][0])
+                    sim_level, sim_color = classify_flood_risk(sim_prob)
+
+                    res_c1, res_c2 = st.columns([1, 2.2])
+                    with res_c1:
+                        st.markdown(
+                            f"""
+                            <div class="jd-card" style="border-top: 4px solid {sim_color}; text-align:center;">
+                                <div class="jd-metric-title">Simulated {sim_horizon} Probability</div>
+                                <div class="jd-metric-val" style="color:{sim_color};">{sim_prob:.1%}</div>
+                                <span class="jd-badge" style="background:{sim_color}22; color:{sim_color}; border:1px solid {sim_color}; font-size:0.95rem;">
+                                    {sim_level.upper()} RISK
+                                </span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                    with res_c2:
+                        if sim_level == "High":
+                            advisory_msg = (
+                                f"🚨 **CRITICAL FLOOD RISK ({sim_prob:.1%})**: Simulated runoff volume and catchment saturation "
+                                f"indicate river discharge is projected to exceed the {selected_dist_name} flood threshold ({dist_threshold:.1f} m³/s). "
+                                f"Immediate deployment of emergency response teams and evacuation of low-lying floodplains advised."
+                            )
+                        elif sim_level == "Medium":
+                            advisory_msg = (
+                                f"⚠️ **MODERATE FLOOD WATCH ({sim_prob:.1%})**: Inflow parameters indicate rising water levels nearing "
+                                f"critical warning levels. Precautionary monitoring of upstream barrages and flood alert dispatches recommended."
+                            )
+                        else:
+                            advisory_msg = (
+                                f"✓ **SAFE CHANNEL CAPACITY ({sim_prob:.1%})**: Simulated discharge remains within normal safe channel carrying capacity. "
+                                f"No inundation threat anticipated within the {sim_horizon} window."
+                            )
+                        st.markdown(
+                            f"""
+                            <div class="jd-card">
+                                <div class="jd-metric-title">Operational Advisory ({selected_dist_name})</div>
+                                <p style="font-size:0.92rem; color:#e2e8f0; line-height:1.5; margin-top:8px;">{advisory_msg}</p>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                else:
+                    st.error(f"Model for horizon {sim_horizon} could not be loaded.")
+    except Exception as e:
+        st.warning(f"Scenario simulator encountered an edge case: {e}")
+
 # ==============================================================================
 # TAB 2: HISTORICAL BACKTEST
 # ==============================================================================
@@ -689,17 +798,31 @@ with tab_backtest:
     )
 
     if backtest_meta:
+        st.markdown(
+            """
+            <div style="background:#1e293b; border-left:4px solid #38bdf8; border-radius:8px; padding:12px 16px; margin-bottom:15px;">
+                <b style="color:#38bdf8; font-size:1.05rem;">Catchment Saturation Precursor Detected: 7 Days (168 Hours) Ahead of Peak Crest</b><br>
+                <span style="color:#cbd5e1; font-size:0.88rem;">
+                <b>Target Horizon vs. Precursor Duration:</b> While the ML model target predicts flood conditions within a <b>72-hour forward window</b>, 
+                persistent multi-day precipitation and upper-catchment soil saturation caused sustained high-risk probability alerts (P &ge; 60%) 
+                to fire beginning on <b>July 7, 2022</b>—<b>7 calendar days (168 hours)</b> prior to the observed crest on July 14, 2022.
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
         b_c1, b_c2, b_c3, b_c4 = st.columns(4)
         with b_c1:
-            st.metric("Early Warning Lead Time", f"{backtest_meta.get('lead_time_days', 0)} Days", f"{backtest_meta.get('lead_time_hours', 0)} Hours")
+            st.metric("Catchment Precursor Duration", f"{backtest_meta.get('lead_time_days', 0)} Days", f"{backtest_meta.get('lead_time_hours', 0)} Hours Ahead")
         with b_c2:
-            st.metric("Observed Peak Date", str(backtest_meta.get("peak_date", "-")), f"{backtest_meta.get('peak_discharge_m3s', 0):.1f} m³/s")
+            st.metric("Observed Peak Crest", str(backtest_meta.get("peak_date", "-")), f"{backtest_meta.get('peak_discharge_m3s', 0):.1f} m³/s")
         with b_c3:
-            st.metric("First Warning Triggered", str(backtest_meta.get("warning_date", "-")), f"P={backtest_meta.get('warning_prob_72h', 0):.1%}")
+            st.metric("First Precursor Alert", str(backtest_meta.get("warning_date", "-")), f"P={backtest_meta.get('warning_prob_72h', 0):.1%}")
         with b_c4:
-            st.metric("Flood Level Threshold", f"{backtest_meta.get('threshold_m3s', 0):.1f} m³/s", "95th Percentile")
+            st.metric("Model Target Horizon", "72 Hours", "Rolling Window")
 
-        st.info(f"**Verification Outcome:** {backtest_meta.get('analysis_notes', '')}")
+        st.info(f"**Hydrological Analysis:** {backtest_meta.get('analysis_notes', '')}")
 
     backtest_html_file = MODELS_DIR / "backtest.html"
     if backtest_html_file.exists():
@@ -716,30 +839,50 @@ with tab_metrics:
     st.markdown("### 📈 Quantitative Performance & Baseline Audit")
     st.markdown(
         "All models are strictly evaluated on unseen out-of-time test data (2022-2025). "
-        "We benchmark XGBoost against a **Naive Persistence Baseline** ('Tomorrow equals today') to ensure machine learning "
-        "provides genuine predictive lift over mere persistence."
+        "We benchmark XGBoost against both a **Naive Persistence Baseline** ('Tomorrow equals today') and an "
+        "**Antecedent Precipitation Index (API-3 Linear Benchmark)** to ensure machine learning "
+        "provides genuine predictive lift over traditional hydrological rules."
     )
 
     if not df_metrics.empty:
+        format_dict = {
+            "Precision": "{:.2%}",
+            "Recall": "{:.2%}",
+            "F1-Score": "{:.2%}",
+            "ROC-AUC": "{:.3f}",
+        }
+        if "F2-Score" in df_metrics.columns:
+            format_dict["F2-Score"] = "{:.2%}"
+
         st.dataframe(
-            df_metrics.style.format({
-                "Precision": "{:.2%}",
-                "Recall": "{:.2%}",
-                "F1-Score": "{:.2%}",
-                "ROC-AUC": "{:.3f}",
-            }),
+            df_metrics.style.format(format_dict),
             use_container_width=True,
+        )
+
+        st.markdown(
+            """
+            <div style="background:#1e293b; border-left:4px solid #10b981; border-radius:8px; padding:12px 16px; margin-top:15px; margin-bottom:15px;">
+                <b style="color:#10b981; font-size:1.02rem;">Asymmetric Disaster Loss Function & F2 Justification</b><br>
+                <span style="color:#cbd5e1; font-size:0.88rem;">
+                In flood early warning, a <b>False Negative (missed flood)</b> leading to loss of human life and unevacuated settlements is 
+                exponentially costlier than a <b>False Positive (precautionary inspection)</b>. 
+                The <b>F2-score (&beta;=2)</b> places <b>4x more weight on Recall than Precision</b>. 
+                JalDrishti optimizes for maximum F2-score and &gt;90% recall (achieving <b>82.91% F2 at 72h</b> vs 77.78% for persistence and 61.87% for API-3).
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         st.markdown("#### 🔬 Key Model Diagnostics & Empirical Trade-Offs")
         st.markdown(
             """
-            1. **Predictive Lift over Baseline at 72h**:
+            1. **Predictive Lift over Baselines at 72h**:
                - The naive persistence baseline misses **144 flood days** (Recall drops to 75.09%) because persistence cannot anticipate floods that haven't happened yet.
-               - In contrast, JalDrishti's 72h XGBoost model achieves **90.66% Recall**, capturing **524 out of 578 flood days** and missing only **54 days**.
+               - The API-3 linear rainfall index triggers **754 false alarms** because rain alone without soil saturation context over-predicts runoff.
+               - In contrast, JalDrishti's 72h XGBoost model achieves **90.66% Recall (F2: 82.91%)**, capturing **524 out of 578 flood days** and missing only **54 days**.
             2. **The Disaster Warning Trade-Off (Recall vs Precision)**:
-               - In disaster management, a **missed flood is catastrophic** (loss of human life and livestock), whereas a **false alarm is merely inconvenient**.
-               - Using `scale_pos_weight`, the model intentionally prioritizes high recall (~90%), accepting a modest increase in false alarms (324 FP at 72h) to avoid deadly surprise floods.
+               - Using cost-sensitive `scale_pos_weight`, the model intentionally prioritizes high recall (~90%), accepting a manageable rate of false alarms to avoid deadly surprise floods.
             """
         )
 

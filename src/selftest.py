@@ -133,3 +133,4 @@ def run_selftest() -> bool:
 if __name__ == "__main__":
     success = run_selftest()
     sys.exit(0 if success else 1)
+

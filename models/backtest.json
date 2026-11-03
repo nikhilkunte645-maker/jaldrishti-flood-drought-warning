@@ -11,6 +11,8 @@
   "warning_prob_72h": 0.7234,
   "lead_time_days": 7,
   "lead_time_hours": 168,
+  "model_target_horizon": "72h Forward Window",
+  "precursor_type": "Early Catchment Saturation Precursor: 7 Days (168 Hours) Prior to Peak Discharge (Model Target Horizon: 72h Forward Window)",
   "resolution_note": "Daily aggregated data; lead time reflects whole calendar days (days x 24h).",
-  "analysis_notes": "High Risk (>=0.60) warning triggered on 2022-07-07 with P(flood)=72.34%, providing 7 days (168 hours) lead time prior to observed peak on 2022-07-14."
+  "analysis_notes": "Early Catchment Saturation Precursor: 7 Days (168 Hours) Prior to Peak Discharge (Model Target Horizon: 72h Forward Window). While the model target predicts flood conditions within a 72-hour forward window, persistent multi-day precipitation and upper-catchment soil saturation caused sustained high-risk probability alerts (P >= 60%) to fire beginning on 2022-07-07 (P=72.34%)\u20147 calendar days prior to the crest on 2022-07-14."
 }

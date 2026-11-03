@@ -47,3 +47,4 @@ def get_risk_badge_html(level: str, prefix: str = "") -> str:
         f'font-weight: 700; font-size: 0.85rem; letter-spacing: 0.03em;">'
         f'{label}</span>'
     )
+

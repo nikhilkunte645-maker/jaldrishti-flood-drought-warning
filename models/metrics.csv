@@ -1,7 +1,10 @@
-Horizon,Model,Precision,Recall,F1-Score,ROC-AUC,False Alarms (FP),Missed Events (FN),True Positives (TP),True Negatives (TN)
-24h,XGBoost (JalDrishti),0.7265,0.9021,0.8048,0.9891,163,47,433,4953
-24h,Naive Baseline (Persistence),0.8894,0.8875,0.8884,0.5,53,54,426,5063
-48h,XGBoost (JalDrishti),0.6685,0.9043,0.7687,0.9836,239,51,482,4820
-48h,Naive Baseline (Persistence),0.9059,0.8124,0.8566,0.5,45,100,433,5014
-72h,XGBoost (JalDrishti),0.6179,0.9066,0.7349,0.9766,324,54,524,4686
-72h,Naive Baseline (Persistence),0.9079,0.7509,0.822,0.5,44,144,434,4966
+Horizon,Model,Precision,Recall,F1-Score,F2-Score,ROC-AUC,False Alarms (FP),Missed Events (FN),True Positives (TP),True Negatives (TN)
+24h,XGBoost (JalDrishti),0.7265,0.9021,0.8048,0.8605,0.9891,163,47,433,4953
+24h,Naive Baseline (Persistence),0.8894,0.8875,0.8884,0.8879,0.5,53,54,426,5063
+24h,API-3 Linear Benchmark,0.3005,0.7125,0.4227,0.5592,0.8751,796,138,342,4320
+48h,XGBoost (JalDrishti),0.6685,0.9043,0.7687,0.8447,0.9836,239,51,482,4820
+48h,Naive Baseline (Persistence),0.9059,0.8124,0.8566,0.8295,0.5,45,100,433,5014
+48h,API-3 Linear Benchmark,0.3408,0.7392,0.4665,0.5991,0.8872,762,139,394,4297
+72h,XGBoost (JalDrishti),0.6179,0.9066,0.7349,0.8291,0.9766,324,54,524,4686
+72h,Naive Baseline (Persistence),0.9079,0.7509,0.822,0.7778,0.5,44,144,434,4966
+72h,API-3 Linear Benchmark,0.3648,0.7491,0.4907,0.6187,0.8917,754,145,433,4256

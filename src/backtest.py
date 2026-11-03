@@ -76,8 +76,11 @@ def run_july_2022_backtest():
         lead_time_days = (pd.to_datetime(peak_date) - pd.to_datetime(warning_date)).days
         lead_time_hours = lead_time_days * 24
         notes = (
-            f"High Risk (>=0.60) warning triggered on {warning_date} with P(flood)={warning_prob:.2%}, "
-            f"providing {lead_time_days} days ({lead_time_hours} hours) lead time prior to observed peak on {peak_date}."
+            f"Early Catchment Saturation Precursor: {lead_time_days} Days ({lead_time_hours} Hours) Prior to Peak Discharge "
+            f"(Model Target Horizon: 72h Forward Window). While the model target predicts flood conditions within a 72-hour "
+            f"forward window, persistent multi-day precipitation and upper-catchment soil saturation caused sustained high-risk "
+            f"probability alerts (P >= 60%) to fire beginning on {warning_date} (P={warning_prob:.2%})—{lead_time_days} calendar days "
+            f"prior to the crest on {peak_date}."
         )
     else:
         # Check Medium threshold as secondary diagnostic
@@ -90,8 +93,8 @@ def run_july_2022_backtest():
             lead_time_hours = lead_time_days * 24
             notes = (
                 f"No HIGH risk (>=0.60) warning was triggered prior to peak. "
-                f"However, MEDIUM risk (>=0.30) was reached on {warning_date} (P={warning_prob:.2%}) "
-                f"giving {lead_time_days} days ({lead_time_hours} hours) lead time."
+                f"However, MEDIUM risk (>=0.30) catchment precursor was reached on {warning_date} (P={warning_prob:.2%}) "
+                f"giving {lead_time_days} days ({lead_time_hours} hours) precursor duration ahead of peak crest (Target Horizon: 72h)."
             )
         else:
             notes = "No early warning was triggered prior to the peak flood event."
@@ -195,22 +198,22 @@ def run_july_2022_backtest():
         fig.add_annotation(
             x=warning_date,
             y=warning_prob if warning_prob else 0.6,
-            text=f"First Alert ({warning_date})<br>Lead Time: {lead_time_days}d ({lead_time_hours}h)",
+            text=f"Catchment Precursor Alert ({warning_date})<br>Precursor: {lead_time_days}d ({lead_time_hours}h) Prior to Crest<br>Target Horizon: 72h Window",
             showarrow=True,
             arrowhead=2,
             arrowcolor="#22c55e",
             arrowsize=1.2,
             bgcolor="#1c2541",
             bordercolor="#22c55e",
-            font=dict(color="#22c55e", size=11),
+            font=dict(color="#22c55e", size=10),
             row=2,
             col=1,
         )
 
     fig.update_layout(
         title=dict(
-            text="<b>Historic Replay: July 2022 Godavari Flood — Bhadradri Kothagudem</b><br><sup>Lead Time Verification for JNTUH Neural Storm 2026 Submission</sup>",
-            font=dict(size=16, color="#f1f5f9"),
+            text="<b>Historic Replay: July 2022 Godavari Flood — Bhadradri Kothagudem</b><br><sup>Early Catchment Saturation Precursor: 7 Days (168h) Prior to Peak Crest (Target Horizon: 72h)</sup>",
+            font=dict(size=15, color="#f1f5f9"),
         ),
         paper_bgcolor="#0b132b",
         plot_bgcolor="#1c2541",
@@ -251,6 +254,8 @@ def run_july_2022_backtest():
         "warning_prob_72h": round(warning_prob, 4) if warning_prob is not None else None,
         "lead_time_days": lead_time_days,
         "lead_time_hours": lead_time_hours,
+        "model_target_horizon": "72h Forward Window",
+        "precursor_type": f"Early Catchment Saturation Precursor: {lead_time_days} Days ({lead_time_hours} Hours) Prior to Peak Discharge (Model Target Horizon: 72h Forward Window)",
         "resolution_note": "Daily aggregated data; lead time reflects whole calendar days (days x 24h).",
         "analysis_notes": notes,
     }
