@@ -1,0 +1,14 @@
+[
+  "precip_roll_1d",
+  "precip_roll_3d",
+  "precip_roll_7d",
+  "precip_roll_14d",
+  "soil_moisture",
+  "soil_moisture_diff_3d",
+  "river_discharge",
+  "river_discharge_lag_1d",
+  "river_discharge_lag_2d",
+  "river_discharge_lag_3d",
+  "river_discharge_diff_1d",
+  "month"
+]
