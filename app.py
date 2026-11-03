@@ -341,7 +341,7 @@ with tab_dashboard:
         telangana_map = folium.Map(
             location=[18.35, 79.4],
             zoom_start=7,
-            tiles="CartoDB dark_matter",
+            tiles="OpenStreetMap",
             control_scale=True,
         )
 

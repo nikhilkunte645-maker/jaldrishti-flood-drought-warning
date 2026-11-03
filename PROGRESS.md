@@ -17,7 +17,7 @@ Author: Solo Builder
 - [x] **Phase 6: Streamlit Application** - Modern dark-themed dashboard with Folium map of Telangana, 24/48/72h risk cards, drought severity status, 30-day rainfall/discharge Plotly chart, WhatsApp-style alert cards, and backtest tabs.
 - [x] **Phase 7: Explainable AI (SHAP)** - TreeSHAP explanations computed and serialized to data/shap_values.csv; interactive horizontal bar chart with top-5 human-readable drivers added to the dashboard.
 - [x] **Phase 8: Testing & Verification** - Automated self-test (src/selftest.py: 16/16 files, 3 models, 72 alerts, 20 random drought lookups), Streamlit AppTest smoke tests (tests/test_app_smoke.py: 4 districts x 5 dates x 3 languages), and UI screenshots in docs/screenshots/.
-- [ ] **Phase 9: Documentation & Deliverables** - Complete README, pinned requirements, demo script, and submission checklist.
+- [x] **Phase 9: Documentation & Deliverables** - Comprehensive README with pitch, architecture Mermaid diagram, real metrics, limitations, how-to-run, demo video script (docs/DEMO_SCRIPT.md), submission checklist (docs/SUBMISSION_CHECKLIST.md), and pinned requirements.txt.
 - [ ] **Phase 8: Testing & Verification** - Self-test suite, AppTest smoke tests, browser verification, and UI screenshots.
 - [ ] **Phase 9: Documentation & Deliverables** - Complete README, pinned requirements, demo script, and submission checklist.
 
