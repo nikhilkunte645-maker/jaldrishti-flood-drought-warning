@@ -16,7 +16,8 @@ Author: Solo Builder
 - [x] **Phase 5: Risk Scoring & Multilingual Alerts** - Risk thresholds (<0.3 Low, 0.3-0.6 Medium, >0.6 High), color mappings, and 72 alert templates across English, Telugu, and Hindi verified with no leftover braces.
 - [x] **Phase 6: Streamlit Application** - Modern dark-themed dashboard with Folium map of Telangana, 24/48/72h risk cards, drought severity status, 30-day rainfall/discharge Plotly chart, WhatsApp-style alert cards, and backtest tabs.
 - [x] **Phase 7: Explainable AI (SHAP)** - TreeSHAP explanations computed and serialized to data/shap_values.csv; interactive horizontal bar chart with top-5 human-readable drivers added to the dashboard.
-- [ ] **Phase 8: Testing & Verification** - Self-test suite, AppTest smoke tests, browser verification, and UI screenshots.
+- [x] **Phase 8: Testing & Verification** - Automated self-test (src/selftest.py: 16/16 files, 3 models, 72 alerts, 20 random drought lookups), Streamlit AppTest smoke tests (tests/test_app_smoke.py: 4 districts x 5 dates x 3 languages), and UI screenshots in docs/screenshots/.
+- [ ] **Phase 9: Documentation & Deliverables** - Complete README, pinned requirements, demo script, and submission checklist.
 - [ ] **Phase 8: Testing & Verification** - Self-test suite, AppTest smoke tests, browser verification, and UI screenshots.
 - [ ] **Phase 9: Documentation & Deliverables** - Complete README, pinned requirements, demo script, and submission checklist.
 
