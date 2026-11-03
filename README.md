@@ -1,4 +1,12 @@
 # 🌊 JalDrishti (జలదృష్టి / जलदृष्टि)
+
+<p align="center">
+  <img src="docs/screenshots/cover.png" alt="JalDrishti Banner" width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/cover.jpg" alt="JalDrishti Banner" width="100%">
+</p>
 ### Explainable Flood and Drought Early Warning System for the Godavari Basin, Telangana
 **JNTUH Neural Storm 2026 — Green Planet Track (Challenge GP-03)**  
 *Built by `Nikhil Kunte`*
@@ -247,3 +255,5 @@ To deploy this application live on Streamlit Community Cloud:
 - **Track:** Green Planet (GP-03: Flood and Drought Early Warning System)
 - **Author:** Solo Student Builder (`Nikhil Kunte`)
 - **Institution:** JNTUH Neural Storm 2026 Participant
+
+
