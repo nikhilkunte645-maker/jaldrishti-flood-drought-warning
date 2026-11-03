@@ -1,0 +1,16 @@
+{
+  "district": "Bhadradri Kothagudem",
+  "district_slug": "bhadradri_kothagudem",
+  "event_name": "Godavari Basin Severe Monsoon Floods (Bhadrachalam)",
+  "simulation_window": "2022-07-01 to 2022-07-25",
+  "threshold_m3s": 80.89,
+  "peak_date": "2022-07-14",
+  "peak_discharge_m3s": 193.98,
+  "warning_issued_before_peak": true,
+  "warning_date": "2022-07-07",
+  "warning_prob_72h": 0.7234,
+  "lead_time_days": 7,
+  "lead_time_hours": 168,
+  "resolution_note": "Daily aggregated data; lead time reflects whole calendar days (days x 24h).",
+  "analysis_notes": "High Risk (>=0.60) warning triggered on 2022-07-07 with P(flood)=72.34%, providing 7 days (168 hours) lead time prior to observed peak on 2022-07-14."
+}
