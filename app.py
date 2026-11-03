@@ -199,6 +199,14 @@ def load_backtest_meta() -> dict:
         return json.load(f)
 
 
+@st.cache_data
+def load_shap_data() -> pd.DataFrame:
+    p = DATA_DIR / "shap_values.csv"
+    if not p.exists():
+        return pd.DataFrame()
+    return pd.read_csv(p)
+
+
 # Load cached local datasets
 df_preds = load_predictions()
 df_all = load_all_districts_data()
@@ -206,6 +214,7 @@ df_drought = load_drought_data()
 thresholds = load_thresholds()
 df_metrics = load_metrics()
 backtest_meta = load_backtest_meta()
+df_shap = load_shap_data()
 
 # ==============================================================================
 # SIDEBAR CONTROLS
@@ -581,6 +590,91 @@ with tab_dashboard:
             st.plotly_chart(fig_30d, use_container_width=True)
         else:
             st.info("Insufficient historical records in the selected 30-day window.")
+
+    # --------------------------------------------------------------------------
+    # PHASE 7: EXPLAINABLE AI (SHAP FEATURE ATTRIBUTION)
+    # --------------------------------------------------------------------------
+    st.markdown("---")
+    st.markdown("##### 🧠 Why this risk? (Explainable AI Attribution for 72h Flood Forecast)")
+    st.caption("Local TreeSHAP feature contributions explaining why the XGBoost model predicted this 72h flood likelihood.")
+
+    try:
+        PLAIN_LABELS = {
+            "shap_precip_roll_7d": "7-Day Cumulative Rainfall",
+            "shap_precip_roll_14d": "14-Day Cumulative Rainfall",
+            "shap_precip_roll_3d": "3-Day Rainfall Accumulation",
+            "shap_precip_roll_1d": "Recent 24h Rain",
+            "shap_river_discharge": "Current River Discharge",
+            "shap_river_discharge_lag_1d": "Previous Day River Flow",
+            "shap_river_discharge_lag_2d": "2-Day Prior River Flow",
+            "shap_river_discharge_lag_3d": "3-Day Prior River Flow",
+            "shap_river_discharge_diff_1d": "1-Day River Flow Surge Rate",
+            "shap_soil_moisture": "Upper Soil Moisture Saturation",
+            "shap_soil_moisture_diff_3d": "3-Day Soil Wetting Rate",
+            "shap_month": "Monsoon Seasonal Timing",
+        }
+
+        if not df_shap.empty:
+            m_shap = (df_shap["district_slug"] == selected_slug) & (df_shap["date"] == selected_date)
+            matching_shap = df_shap[m_shap]
+
+            if not matching_shap.empty:
+                shap_row = matching_shap.iloc[0]
+                shap_cols = [c for c in df_shap.columns if c.startswith("shap_")]
+
+                # Extract contributions and sort by magnitude
+                contribs = []
+                for sc in shap_cols:
+                    val = float(shap_row.get(sc, 0.0))
+                    label = PLAIN_LABELS.get(sc, sc.replace("shap_", "").replace("_", " ").title())
+                    contribs.append({"feature": label, "shap_value": val, "abs_val": abs(val)})
+
+                contrib_df = pd.DataFrame(contribs).sort_values("abs_val", ascending=False).head(5)
+                # Sort ascending for horizontal bar chart (top contributor at top)
+                contrib_df = contrib_df.sort_values("abs_val", ascending=True)
+
+                colors = ["#ef4444" if v > 0 else "#38bdf8" for v in contrib_df["shap_value"]]
+
+                fig_shap = go.Figure(
+                    go.Bar(
+                        x=contrib_df["shap_value"],
+                        y=contrib_df["feature"],
+                        orientation="h",
+                        marker_color=colors,
+                        text=[f"{v:+.2f}" for v in contrib_df["shap_value"]],
+                        textposition="outside",
+                    )
+                )
+
+                fig_shap.update_layout(
+                    title=dict(
+                        text=f"<b>Top 5 Drivers for {selected_dist_name} ({selected_date})</b><br><sup>Red = Increases Flood Risk (+) | Blue = Decreases Flood Risk (-)</sup>",
+                        font=dict(size=14, color="#f1f5f9"),
+                    ),
+                    paper_bgcolor="#0b132b",
+                    plot_bgcolor="#1c2541",
+                    font=dict(color="#cbd5e1"),
+                    margin=dict(l=40, r=40, t=50, b=30),
+                    height=280,
+                    xaxis=dict(title="SHAP Value (Impact on Log-Odds of Flood)", zeroline=True, zerolinecolor="#64748b", gridcolor="#334155"),
+                    yaxis=dict(gridcolor="#334155"),
+                )
+
+                st.plotly_chart(fig_shap, use_container_width=True)
+
+                # Plain-English dynamic explanation
+                top_driver = contrib_df.sort_values("abs_val", ascending=False).iloc[0]
+                direction = "elevating" if top_driver["shap_value"] > 0 else "suppressing"
+                st.info(
+                    f"**Hydrological Explanation:** The primary driver influencing the 72h flood forecast on {selected_date} is "
+                    f"**{top_driver['feature']}** ({top_driver['shap_value']:+.2f} SHAP impact), significantly {direction} flood likelihood."
+                )
+            else:
+                st.info("SHAP feature attribution not available for the selected historical date.")
+        else:
+            st.info("SHAP attribution values are being computed.")
+    except Exception as e:
+        st.warning(f"Feature attribution temporarily unavailable: {e}")
 
 # ==============================================================================
 # TAB 2: HISTORICAL BACKTEST

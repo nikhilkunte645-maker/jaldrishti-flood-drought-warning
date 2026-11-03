@@ -15,7 +15,8 @@ Author: Solo Builder
 - [x] **Phase 4: Drought Index Engine** - SPI-1, SPI-3 (gamma distribution with zero-rain probability adjustment) and Soil Moisture Z-Score anomaly engine (saved to data/drought.csv, get_drought_status exported).
 - [x] **Phase 5: Risk Scoring & Multilingual Alerts** - Risk thresholds (<0.3 Low, 0.3-0.6 Medium, >0.6 High), color mappings, and 72 alert templates across English, Telugu, and Hindi verified with no leftover braces.
 - [x] **Phase 6: Streamlit Application** - Modern dark-themed dashboard with Folium map of Telangana, 24/48/72h risk cards, drought severity status, 30-day rainfall/discharge Plotly chart, WhatsApp-style alert cards, and backtest tabs.
-- [ ] **Phase 7: Explainable AI (SHAP)** - Top-5 feature attribution for 72h flood predictions.
+- [x] **Phase 7: Explainable AI (SHAP)** - TreeSHAP explanations computed and serialized to data/shap_values.csv; interactive horizontal bar chart with top-5 human-readable drivers added to the dashboard.
+- [ ] **Phase 8: Testing & Verification** - Self-test suite, AppTest smoke tests, browser verification, and UI screenshots.
 - [ ] **Phase 8: Testing & Verification** - Self-test suite, AppTest smoke tests, browser verification, and UI screenshots.
 - [ ] **Phase 9: Documentation & Deliverables** - Complete README, pinned requirements, demo script, and submission checklist.
 
