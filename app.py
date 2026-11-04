@@ -263,6 +263,17 @@ with st.sidebar:
         selected_date = "2022-07-14"
 
     st.markdown("---")
+    pdf_path = Path("docs/JalDrishti_Hackathon_Submission_Report.pdf")
+    if pdf_path.exists():
+        with open(pdf_path, "rb") as f:
+            st.download_button(
+                label="📄 Download Official PDF Report",
+                data=f.read(),
+                file_name="JalDrishti_Hackathon_Submission_Report.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+            )
+
     st.markdown(
         """
         <div style="font-size:0.75rem; color:#94a3b8; line-height:1.4;">
@@ -928,7 +939,20 @@ with tab_about:
         #### 👤 Builder Attribution
         - **Track**: Green Planet (GP-03: Flood and Drought Early Warning System)
         - **Submission**: JNTUH Neural Storm 2026 Hackathon
-        - **Author**: Solo Student Builder
-        - *Note: Telugu and Hindi emergency alert phrasing has been reviewed for idiomatic accuracy and is tagged for native-speaker field validation.*
+        - **Author / Lead Engineer**: Nikhil Kunte
+        - **Deployment**: [Live on Streamlit Community Cloud](https://jaldrishti-warning.streamlit.app)
+        - **Source Code**: [GitHub Repository (Public)](https://github.com/nikhilkunte645-maker/jaldrishti-flood-drought-warning)
         """
     )
+
+    pdf_path = Path("docs/JalDrishti_Hackathon_Submission_Report.pdf")
+    if pdf_path.exists():
+        st.markdown("#### 📥 Official Documentation & Verification Report")
+        with open(pdf_path, "rb") as f:
+            st.download_button(
+                label="📥 Download Full Presentation PDF Report (High-DPI, A4)",
+                data=f.read(),
+                file_name="JalDrishti_Hackathon_Submission_Report.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+            )
