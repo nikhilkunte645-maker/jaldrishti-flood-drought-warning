@@ -4,6 +4,7 @@ Explainable Flood & Drought Early Warning System for the Godavari Basin, Telanga
 JNTUH Neural Storm 2026 | Green Planet Track (GP-03)
 """
 
+import base64
 import json
 from pathlib import Path
 from typing import Dict, Optional, Tuple
@@ -11,6 +12,7 @@ import folium
 import joblib
 import numpy as np
 import pandas as pd
+from PIL import Image
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
@@ -21,19 +23,80 @@ from src.drought import get_drought_status
 from src.risk import RISK_COLORS, classify_flood_risk, get_risk_badge_html
 
 # ==============================================================================
-# STREAMLIT CONFIGURATION
+# ASSETS & BRANDING CONFIGURATION
 # ==============================================================================
+ASSETS_DIR = Path("docs/assets")
+LOGO_PATH = ASSETS_DIR / "logo.png"
+
+LOGO_B64 = ""
+if LOGO_PATH.exists():
+    try:
+        with open(LOGO_PATH, "rb") as f:
+            LOGO_B64 = base64.b64encode(f.read()).decode("utf-8")
+    except Exception:
+        LOGO_B64 = ""
+
+page_icon_val = Image.open(LOGO_PATH) if LOGO_PATH.exists() else "🌊"
+
 st.set_page_config(
     page_title="JalDrishti | Flood & Drought Early Warning",
-    page_icon="🌊",
+    page_icon=page_icon_val,
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for dark modern UI
+# Custom CSS for dark modern UI with Google Fonts (Inter & Space Grotesk)
 st.markdown(
     """
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+
     <style>
+    /* Global Typography */
+    html, body, [class*="css"], .stApp {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Space Grotesk', -apple-system, sans-serif;
+    }
+
+    /* Brand Typography Classes */
+    .brand-header {
+        font-family: 'Space Grotesk', -apple-system, sans-serif;
+        font-weight: 700;
+        font-size: 24px;
+        color: #00F2FE;
+        letter-spacing: -0.5px;
+        margin-bottom: 0px;
+        line-height: 1.1;
+    }
+    
+    .brand-vernacular {
+        font-family: 'Inter', sans-serif;
+        font-size: 11px;
+        color: #94A3B8;
+        font-weight: 500;
+        letter-spacing: 0.3px;
+        margin-top: 2px;
+    }
+    
+    .brand-badge {
+        display: inline-block;
+        font-family: 'Inter', sans-serif;
+        font-size: 10px;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        background: rgba(0, 242, 254, 0.12);
+        color: #38BDF8;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        border-radius: 4px;
+        padding: 2px 6px;
+        margin-top: 6px;
+    }
+
     /* Main container background and text */
     .stApp {
         background-color: #0b132b;
@@ -229,8 +292,24 @@ df_shap = load_shap_data()
 # SIDEBAR CONTROLS
 # ==============================================================================
 with st.sidebar:
-    st.markdown("## 🌊 JalDrishti")
-    st.caption("JNTUH Neural Storm 2026 | Green Planet (GP-03)")
+    if LOGO_B64:
+        st.markdown(
+            f"""
+            <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px; padding-bottom: 4px;">
+                <img src="data:image/png;base64,{LOGO_B64}" style="width: 54px; height: 54px; border-radius: 12px; box-shadow: 0 4px 14px rgba(0, 242, 254, 0.25); flex-shrink: 0; background: #0b132b; object-fit: contain;">
+                <div style="flex-grow: 1;">
+                    <div class="brand-header">JalDrishti</div>
+                    <div class="brand-vernacular">జలదృష్టి • जलदृष्टि</div>
+                    <div class="brand-badge">JNTUH Neural Storm 2026 • GP-03</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown('<div class="brand-header">JalDrishti</div>', unsafe_allow_html=True)
+        st.markdown('<div class="brand-vernacular">జలదృష్టి • जलदृष्टि</div>', unsafe_allow_html=True)
+        st.markdown('<div class="brand-badge">JNTUH Neural Storm 2026 • GP-03</div>', unsafe_allow_html=True)
     st.markdown("---")
 
     # District Selector
@@ -290,9 +369,14 @@ with st.sidebar:
 # ==============================================================================
 # APP HEADER
 # ==============================================================================
-col_title, col_status = st.columns([3, 1])
+col_title, col_status = st.columns([3.2, 1])
 with col_title:
-    st.title("🌊 JalDrishti (जलदृष्टि / జలదృష్టి)")
+    col_logo, col_heading = st.columns([0.15, 0.85])
+    with col_logo:
+        if LOGO_PATH.exists():
+            st.image(str(LOGO_PATH), width=62)
+    with col_heading:
+        st.title("JalDrishti (जलदृष्टि / జలదృష్టి)")
     st.markdown(
         "**Explainable flood and drought early warning in your own language** • "
         "Hyper-localized hydrological intelligence for the Godavari Basin, Telangana"
@@ -913,37 +997,42 @@ with tab_metrics:
 # TAB 4: ABOUT & ARCHITECTURE
 # ==============================================================================
 with tab_about:
-    st.markdown("### ℹ️ About JalDrishti")
-    st.markdown(
-        """
-        **JalDrishti (జలదృష్టి / जलदृष्टि)** is an explainable, dual-hazard early warning prototype built for 
-        **JNTUH Neural Storm 2026 (Green Planet Track, Challenge GP-03: Flood and Drought Early Warning System)**.
-        
-        #### 🏛️ Architectural Workflow
-        ```mermaid
-        flowchart TD
-            A[Open-Meteo Archive & Flood APIs] -->|2015-2025 Daily Climatology| B[Data Pipeline & Curation]
-            B --> C[Feature Engineering: Rolling Precipitation & Discharge Lags]
-            C --> D[XGBoost Flood Forecasters: 24h, 48h, 72h Horizons]
-            C --> E[Drought Engine: SPI-1, SPI-3 Gamma Fit & Soil Z-Score]
-            D --> F[Multi-Hazard Risk Engine & WhatsApp Alerts]
-            E --> F
-            F --> G[Streamlit Multilingual UI: English, Telugu, Hindi]
-        ```
+    col_about_logo, col_about_header = st.columns([1, 6])
+    with col_about_logo:
+        if LOGO_PATH.exists():
+            st.image(str(LOGO_PATH), width=105)
+    with col_about_header:
+        st.markdown("### ℹ️ About JalDrishti")
+        st.markdown(
+            """
+            **JalDrishti (జలదృష్టి / जलदृष्टि)** is an explainable, dual-hazard early warning prototype built for 
+            **JNTUH Neural Storm 2026 (Green Planet Track, Challenge GP-03: Flood and Drought Early Warning System)**.
+            
+            #### 🏛️ Architectural Workflow
+            ```mermaid
+            flowchart TD
+                A[Open-Meteo Archive & Flood APIs] -->|2015-2025 Daily Climatology| B[Data Pipeline & Curation]
+                B --> C[Feature Engineering: Rolling Precipitation & Discharge Lags]
+                C --> D[XGBoost Flood Forecasters: 24h, 48h, 72h Horizons]
+                C --> E[Drought Engine: SPI-1, SPI-3 Gamma Fit & Soil Z-Score]
+                D --> F[Multi-Hazard Risk Engine & WhatsApp Alerts]
+                E --> F
+                F --> G[Streamlit Multilingual UI: English, Telugu, Hindi]
+            ```
 
-        #### 📡 Data Sources & Provenance
-        - [Open-Meteo Weather Archive API](https://archive-api.open-meteo.com/v1/archive): Daily precipitation, 2m temperature, and hourly 0-7cm soil moisture.
-        - [Open-Meteo River Discharge & Flood API](https://flood-api.open-meteo.com/v1/flood): Gridded river discharge reanalysis (ECMWF GloFAS).
-        - [Central Water Commission (CWC) Godavari Basin References](https://cwc.gov.in): Bhadrachalam danger level thresholds (43ft, 48ft, 53ft).
+            #### 📡 Data Sources & Provenance
+            - [Open-Meteo Weather Archive API](https://archive-api.open-meteo.com/v1/archive): Daily precipitation, 2m temperature, and hourly 0-7cm soil moisture.
+            - [Open-Meteo River Discharge & Flood API](https://flood-api.open-meteo.com/v1/flood): Gridded river discharge reanalysis (ECMWF GloFAS).
+            - [Central Water Commission (CWC) Godavari Basin References](https://cwc.gov.in): Bhadrachalam danger level thresholds (43ft, 48ft, 53ft).
 
-        #### 👤 Builder Attribution
-        - **Track**: Green Planet (GP-03: Flood and Drought Early Warning System)
-        - **Submission**: JNTUH Neural Storm 2026 Hackathon
-        - **Author / Lead Engineer**: Nikhil Kunte
-        - **Deployment**: [Live on Streamlit Community Cloud](https://jaldrishti-warning.streamlit.app)
-        - **Source Code**: [GitHub Repository (Public)](https://github.com/nikhilkunte645-maker/jaldrishti-flood-drought-warning)
-        """
-    )
+            #### 👤 Builder Attribution
+            - **Track**: Green Planet (GP-03: Flood and Drought Early Warning System)
+            - **Submission**: JNTUH Neural Storm 2026 Hackathon
+            - **Author / Lead Engineer**: Nikhil Kunte
+            - **Deployment**: [Live on Streamlit Community Cloud](https://jaldrishti-warning.streamlit.app)
+            - **Source Code**: [GitHub Repository (Public)](https://github.com/nikhilkunte645-maker/jaldrishti-flood-drought-warning)
+            """
+        )
 
     pdf_path = Path("docs/JalDrishti_Hackathon_Submission_Report.pdf")
     if pdf_path.exists():

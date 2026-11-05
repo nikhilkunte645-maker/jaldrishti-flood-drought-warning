@@ -22,6 +22,7 @@ def get_base64_image(image_path: Path) -> str:
 
 def generate_pdf():
     print("Preparing assets for publication-grade PDF compilation...")
+    logo = get_base64_image(DOCS_DIR / "assets" / "logo.png")
     img1 = get_base64_image(SCREENSHOTS_DIR / "01_risk_dashboard_overview.png")
     img2 = get_base64_image(SCREENSHOTS_DIR / "02_whatif_scenario_sandbox.png")
     img3 = get_base64_image(SCREENSHOTS_DIR / "03_vernacular_alert_telugu.png")
@@ -245,8 +246,13 @@ def generate_pdf():
 
 <!-- PAGE 1: TITLE & EXECUTIVE SUMMARY -->
 <div class="header-banner">
-    <h1>🌊 JalDrishti (జలదృష్టి / जलदृष्टि)</h1>
-    <div class="tagline">Hyper-Localized, Explainable Flood & Drought Early Warning System for the Godavari Basin</div>
+    <div style="display: flex; align-items: center; gap: 18px; margin-bottom: 12px;">
+        <img src="{{LOGO}}" style="width: 58px; height: 58px; border-radius: 12px; box-shadow: 0 4px 14px rgba(0, 242, 254, 0.35); background: #0b132b; flex-shrink: 0;" alt="Logo">
+        <div>
+            <h1 style="margin: 0; line-height: 1.1;">JalDrishti (జలదృష్టి / जलदृष्टि)</h1>
+            <div class="tagline" style="margin-top: 4px; margin-bottom: 0;">Hyper-Localized, Explainable Flood & Drought Early Warning System for the Godavari Basin</div>
+        </div>
+    </div>
     <div class="meta-grid">
         <div><strong>Hackathon:</strong> JNTUH Neural Storm 2026</div>
         <div><strong>Track:</strong> Green Planet (GP-03: Flood & Drought Early Warning)</div>
@@ -583,6 +589,7 @@ To close the critical "last-mile" communication gap, JalDrishti automatically sy
 
     html_content = (
         html_template
+        .replace("{{LOGO}}", logo)
         .replace("{{IMG1}}", img1)
         .replace("{{IMG2}}", img2)
         .replace("{{IMG3}}", img3)
