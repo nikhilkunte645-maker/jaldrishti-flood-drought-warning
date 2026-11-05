@@ -13,15 +13,20 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 CHROME_EXE = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 TARGET_URL = "http://localhost:8501"
 
+
 def set_slider_value(page, label_pattern, target_val):
     sl = page.locator('div[data-testid="stSlider"]').filter(has_text=label_pattern)
     input_elem = sl.locator('input[type="range"]')
-    input_elem.evaluate("""(el, val) => {
+    input_elem.evaluate(
+        """(el, val) => {
         const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
         setter.call(el, val);
         el.dispatchEvent(new Event('input', { bubbles: true }));
         el.dispatchEvent(new Event('change', { bubbles: true }));
-    }""", target_val)
+    }""",
+        target_val,
+    )
+
 
 def select_dropdown_option(page, label_pattern, option_text):
     sb = page.locator('div[data-testid="stSelectbox"]').filter(has_text=label_pattern)
@@ -31,39 +36,40 @@ def select_dropdown_option(page, label_pattern, option_text):
     opt.click()
     page.wait_for_timeout(1000)
 
+
 def scroll_container_to(page, pixel_y):
-    page.evaluate(f"""() => {{
+    page.evaluate(
+        f"""() => {{
         const main = document.querySelector('section.main') || document.querySelector('[data-testid="stMain"]');
         if (main) main.scrollTop = {pixel_y};
         else window.scrollTo(0, {pixel_y});
-    }}""")
+    }}"""
+    )
+
 
 def main():
     print(f"Starting High-Res (1920x1080) Screenshot Capture Suite against {TARGET_URL}...")
     with sync_playwright() as p:
-        browser = p.chromium.launch(
-            executable_path=CHROME_EXE,
-            headless=True
-        )
+        browser = p.chromium.launch(executable_path=CHROME_EXE, headless=True)
         context = browser.new_context(
             viewport={"width": 1920, "height": 1080},
-            device_scale_factor=1.5  # High-DPI crisp rendering
+            device_scale_factor=1.5,  # High-DPI crisp rendering
         )
         page = context.new_page()
 
         # ======================================================================
-        # SCREENSHOT 1: OVERVIEW & INTERACTIVE MAP (RISK DASHBOARD)
+        # SCREENSHOT 1: OVERVIEW & INTERACTIVE MAP (RAPID FLOOD INUNDATION)
         # ======================================================================
         print("\n--- [1/6] Capturing: Risk Dashboard Overview & Map ---")
         page.goto(TARGET_URL, wait_until="networkidle")
         page.wait_for_selector('[data-testid="stAppViewContainer"]', timeout=30000)
-        
-        tab_dash = page.locator('[role="tab"]').filter(has_text="Risk Dashboard")
-        tab_dash.click()
+
+        tab_flood = page.locator('[role="tab"]').filter(has_text="Rapid Flood")
+        tab_flood.click()
         page.wait_for_timeout(4000)  # Wait for Folium map iframe and metrics to paint
         scroll_container_to(page, 0)
         page.wait_for_timeout(800)
-        
+
         ss1_path = OUTPUT_DIR / "01_risk_dashboard_overview.png"
         page.screenshot(path=str(ss1_path))
         print(f"[OK] Saved {ss1_path}")
@@ -72,7 +78,7 @@ def main():
         # SCREENSHOT 2: INTERACTIVE SCENARIO SANDBOX (LIVE WHAT-IF SIMULATOR)
         # ======================================================================
         print("\n--- [2/6] Capturing: What-If Scenario Sandbox ---")
-        tab_dash.click()
+        tab_flood.click()
         page.wait_for_timeout(1000)
 
         # Set sliders: Simulated Rain ~125.0, Current River Discharge ~150.0
@@ -121,11 +127,14 @@ def main():
         # SCREENSHOT 4: MODEL EVALUATION & F2-SCORE BENCHMARK TABLE
         # ======================================================================
         print("\n--- [4/6] Capturing: Model Evaluation & F2-Score Benchmark Table ---")
-        tab_metrics = page.locator('[role="tab"]').filter(has_text="Model Results")
-        tab_metrics.click()
+        tab_audit = page.locator('[role="tab"]').filter(has_text="Model Audit")
+        tab_audit.click()
         page.wait_for_timeout(2500)
 
-        scroll_container_to(page, 0)
+        # Scroll to quantitative benchmark section
+        page.locator('h4:has-text("Quantitative Performance")').evaluate(
+            "el => el.scrollIntoView({ block: 'start', behavior: 'instant' })"
+        )
         page.wait_for_timeout(1000)
 
         ss4_path = OUTPUT_DIR / "04_model_metrics_f2_loss.png"
@@ -136,7 +145,7 @@ def main():
         # SCREENSHOT 5: EXPLAINABLE AI (TREESHAP ATTRIBUTION)
         # ======================================================================
         print("\n--- [5/6] Capturing: Explainable AI (TreeSHAP Attribution) ---")
-        tab_dash.click()
+        tab_flood.click()
         page.wait_for_timeout(2000)
 
         # Scroll so the TreeSHAP section starts at top of viewport
@@ -153,12 +162,11 @@ def main():
         # SCREENSHOT 6: HISTORICAL BACKTEST: JULY 2022 GODAVARI FLOOD
         # ======================================================================
         print("\n--- [6/6] Capturing: Historical Backtest (July 2022 Flood) ---")
-        tab_backtest = page.locator('[role="tab"]').filter(has_text="Backtest")
-        tab_backtest.click()
-        page.wait_for_timeout(3500)  # Wait for backtest HTML iframe to render
+        tab_audit.click()
+        page.wait_for_timeout(2000)
 
         scroll_container_to(page, 0)
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(2500)  # Wait for backtest HTML iframe to render
 
         ss6_path = OUTPUT_DIR / "06_backtest_july2022_flood.png"
         page.screenshot(path=str(ss6_path))
@@ -166,6 +174,7 @@ def main():
 
         browser.close()
         print("\n✨ ALL 6 PRESENTATION-GRADE SCREENSHOTS CAPTURED SUCCESSFULLY! ✨")
+
 
 if __name__ == "__main__":
     main()
