@@ -17,6 +17,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 from streamlit_folium import st_folium
+import yaml
 
 from src.alerts import get_alert
 from src.drought import get_drought_status
@@ -437,11 +438,21 @@ def load_metrics_summary() -> dict:
     return {}
 
 
+@st.cache_data
+def load_basins_config() -> dict:
+    p = Path("config/basins.yaml")
+    if p.exists():
+        with open(p, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f)
+    return {}
+
+
 # Load cached local datasets
 df_preds = load_predictions()
 df_all = load_all_districts_data()
 df_drought = load_drought_data()
 thresholds = load_thresholds()
+basins_config = load_basins_config()
 df_metrics = load_metrics()
 metrics_summary = load_metrics_summary()
 backtest_meta = load_backtest_meta()
@@ -483,16 +494,37 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    # District Selector
-    district_options = {
-        "Bhadradri Kothagudem (Bhadrachalam)": "bhadradri_kothagudem",
-        "Mulugu (Ramappa / Eturnagaram)": "mulugu",
-        "Nizamabad (Sriram Sagar Dam)": "nizamabad",
-        "Adilabad (Kadam / Godavari Reach)": "adilabad",
+    # River Basin Selector (Config-driven multi-basin scalability)
+    basin_display_map = {
+        "🌊 Godavari River Basin (Telangana)": "godavari",
+        "💧 Krishna River Basin (AP/Telangana)": "krishna",
+        "🏞️ Mahanadi River Basin (Odisha)": "mahanadi",
     }
-    selected_dist_label = st.selectbox("Select Godavari District", list(district_options.keys()), index=0)
+    selected_basin_label = st.selectbox("Select Target River Basin", list(basin_display_map.keys()), index=0)
+    selected_basin_id = basin_display_map[selected_basin_label]
+    basin_meta = basins_config.get(selected_basin_id, basins_config.get("godavari", {}))
+    is_heuristic_transfer = (basin_meta.get("model_status") == "heuristic_transfer")
+
+    # Stations for selected basin
+    basin_districts = basin_meta.get("districts", {})
+    if selected_basin_id == "godavari" or not basin_districts:
+        district_options = {
+            "Bhadradri Kothagudem (Bhadrachalam)": "bhadradri_kothagudem",
+            "Mulugu (Ramappa / Eturnagaram)": "mulugu",
+            "Nizamabad (Sriram Sagar Dam)": "nizamabad",
+            "Adilabad (Kadam / Godavari Reach)": "adilabad",
+        }
+    else:
+        district_options = {d_info["name"]: d_slug for d_slug, d_info in basin_districts.items()}
+
+    selected_dist_label = st.selectbox("Select Station / Reach", list(district_options.keys()), index=0)
     selected_slug = district_options[selected_dist_label]
-    selected_dist_name = DISTRICT_COORDS[selected_slug]["name"]
+    selected_dist_name = selected_dist_label.split(" (")[0]
+
+    active_basin_coords = {
+        d_slug: {"name": d_info["name"], "lat": d_info["lat"], "lon": d_info["lon"]}
+        for d_slug, d_info in basin_districts.items()
+    } if basin_districts else DISTRICT_COORDS
 
     st.markdown(
         """
@@ -512,15 +544,6 @@ with st.sidebar:
     selected_lang_label = st.selectbox("Vernacular Alert Language", list(language_map.keys()), index=0)
     selected_lang = language_map[selected_lang_label]
 
-    # Date Selector from Predictions
-    if not df_preds.empty:
-        dist_preds = df_preds[df_preds["district_slug"] == selected_slug].sort_values("date")
-        available_dates = dist_preds["date"].tolist()
-        default_idx = available_dates.index("2022-07-14") if "2022-07-14" in available_dates else len(available_dates) - 1
-        selected_date = st.selectbox("Inspection Date (Test Window: 2022-2025)", available_dates, index=default_idx)
-    else:
-        selected_date = "2022-07-14"
-
     # Telemetry Ingestion
     @st.cache_data(ttl=1800)
     def load_telemetry_cached(slug: str):
@@ -530,6 +553,15 @@ with st.sidebar:
             return {"mode": "LOCAL CACHE FALLBACK (OFFLINE)", "data_source": "Local Historical Fixture Cache"}, "LOCAL CACHE FALLBACK (OFFLINE)"
 
     live_telemetry, telemetry_mode = load_telemetry_cached(selected_slug)
+
+    # Date Selector from Predictions
+    if not is_heuristic_transfer and not df_preds.empty:
+        dist_preds = df_preds[df_preds["district_slug"] == selected_slug].sort_values("date")
+        available_dates = dist_preds["date"].tolist()
+        default_idx = available_dates.index("2022-07-14") if "2022-07-14" in available_dates else len(available_dates) - 1
+        selected_date = st.selectbox("Inspection Date (Test Window: 2022-2025)", available_dates, index=default_idx)
+    else:
+        selected_date = str(live_telemetry.get("observation_date", "2026-11-05"))
 
     st.markdown(
         """
@@ -587,7 +619,10 @@ with col_title:
     )
 
 with col_status:
-    dist_threshold = thresholds.get(selected_slug, 50.0)
+    if is_heuristic_transfer:
+        dist_threshold = float(basin_districts.get(selected_slug, {}).get("threshold_m3s", 100.0))
+    else:
+        dist_threshold = thresholds.get(selected_slug, 50.0)
     st.markdown(
         f"""
         <div style="text-align: right; margin-bottom: 4px;">
@@ -616,18 +651,27 @@ tab_dashboard, tab_backtest, tab_metrics, tab_about = st.tabs([
 
 # Retrieve data for selected district and date
 selected_row = pd.Series(dtype=object)
-if not df_preds.empty:
+if not is_heuristic_transfer and not df_preds.empty:
     m = (df_preds["district_slug"] == selected_slug) & (df_preds["date"] == selected_date)
     matching = df_preds[m]
     if not matching.empty:
         selected_row = matching.iloc[0]
 
-prob_24h = float(selected_row.get("prob_24h", 0.0))
-prob_48h = float(selected_row.get("prob_48h", 0.0))
-prob_72h = float(selected_row.get("prob_72h", 0.0))
-cur_discharge = float(selected_row.get("river_discharge", 0.0))
-cur_precip = float(selected_row.get("precip_mm", 0.0))
-cur_soil = float(selected_row.get("soil_moisture", 0.0))
+if is_heuristic_transfer:
+    cur_discharge = float(live_telemetry.get("river_discharge", 35.0))
+    cur_precip = float(live_telemetry.get("precip_mm", 0.0))
+    cur_soil = float(live_telemetry.get("soil_moisture", 0.35))
+    ratio = cur_discharge / max(dist_threshold, 1.0)
+    prob_72h = float(min(0.98, max(0.04, ratio * 0.50)))
+    prob_48h = float(min(0.98, max(0.04, ratio * 0.44)))
+    prob_24h = float(min(0.98, max(0.04, ratio * 0.38)))
+else:
+    prob_24h = float(selected_row.get("prob_24h", 0.0))
+    prob_48h = float(selected_row.get("prob_48h", 0.0))
+    prob_72h = float(selected_row.get("prob_72h", 0.0))
+    cur_discharge = float(selected_row.get("river_discharge", 0.0))
+    cur_precip = float(selected_row.get("precip_mm", 0.0))
+    cur_soil = float(selected_row.get("soil_moisture", 0.0))
 
 risk_24h_level, color_24h = classify_flood_risk(prob_24h)
 risk_48h_level, color_48h = classify_flood_risk(prob_48h)
@@ -645,25 +689,38 @@ sm_anomaly_z = drought_info.get("sm_anomaly_z", 0.0)
 # TAB 1: RISK DASHBOARD
 # ==============================================================================
 with tab_dashboard:
+    if is_heuristic_transfer:
+        st.warning(
+            f"⚠️ **Heuristic transfer mode: requires 3-5 years of localized gauge data for full XGBoost/TreeSHAP weight calibration.** "
+            f"Currently monitoring **{basin_meta.get('name')}** at station **{selected_dist_label}** using zero-shot threshold heuristics against live Open-Meteo & ECMWF GloFAS telemetry."
+        )
+
     col_map, col_overview = st.columns([1.1, 1.4])
 
     with col_map:
-        st.markdown("##### 📍 Telangana Godavari Basin Network")
-        # Build interactive Folium map
+        st.markdown(f"##### 📍 {basin_meta.get('name', 'Basin')} Monitoring Network")
+        # Build interactive Folium map centered on current basin
+        center_lat = float(np.mean([info["lat"] for info in active_basin_coords.values()]))
+        center_lon = float(np.mean([info["lon"] for info in active_basin_coords.values()]))
         telangana_map = folium.Map(
-            location=[18.35, 79.4],
-            zoom_start=7,
+            location=[center_lat, center_lon],
+            zoom_start=8 if is_heuristic_transfer else 7,
             tiles="OpenStreetMap",
             control_scale=True,
         )
 
-        for slug, info in DISTRICT_COORDS.items():
-            # Get latest 72h risk on selected date for each district
-            dist_p = 0.0
-            if not df_preds.empty:
-                sub_match = df_preds[(df_preds["district_slug"] == slug) & (df_preds["date"] == selected_date)]
-                if not sub_match.empty:
-                    dist_p = float(sub_match.iloc[0]["prob_72h"])
+        for slug, info in active_basin_coords.items():
+            if is_heuristic_transfer:
+                t_data, _ = fetch_basin_data(slug, timeout_sec=1.5)
+                q_val = float(t_data.get("river_discharge", 30.0))
+                thresh_val = float(basin_districts.get(slug, {}).get("threshold_m3s", 100.0))
+                dist_p = min(0.98, max(0.05, (q_val / max(thresh_val, 1.0)) * 0.50))
+            else:
+                dist_p = 0.0
+                if not df_preds.empty:
+                    sub_match = df_preds[(df_preds["district_slug"] == slug) & (df_preds["date"] == selected_date)]
+                    if not sub_match.empty:
+                        dist_p = float(sub_match.iloc[0]["prob_72h"])
 
             level, color = classify_flood_risk(dist_p)
             is_active = (slug == selected_slug)
@@ -674,7 +731,7 @@ with tab_dashboard:
             <div style="font-family:sans-serif; color:#0f172a; min-width:140px;">
                 <b>{info['name']}</b><br>
                 72h Flood Risk: <b style="color:{color}">{level} ({dist_p:.1%})</b><br>
-                Date: {selected_date}
+                Status: {'Heuristic Live Telemetry' if is_heuristic_transfer else f'Historical Date {selected_date}'}
             </div>
             """
 

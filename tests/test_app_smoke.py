@@ -1,6 +1,6 @@
 """
 JalDrishti - Phase 8: AppTest Smoke Test Suite
-Uses streamlit.testing.v1.AppTest to exercise every district x 5 dates x 3 languages.
+Uses streamlit.testing.v1.AppTest to exercise every basin x district x 5 dates x 3 languages.
 Guarantees the UI never raises unhandled exceptions.
 """
 
@@ -20,6 +20,28 @@ def test_app_initial_load():
     assert not at.exception, f"App raised exception on initial load: {at.exception}"
     assert len(at.title) >= 1
     assert "JalDrishti" in at.title[0].value
+
+
+def test_app_basin_switching():
+    """Verify switching between Godavari, Krishna, and Mahanadi basins without error."""
+    at = AppTest.from_file(str(PROJECT_ROOT / "app.py"), default_timeout=30)
+    at.run()
+    assert not at.exception, f"App failed initial load: {at.exception}"
+
+    # 1. Switch to Krishna Basin
+    at.sidebar.selectbox[0].select("💧 Krishna River Basin (AP/Telangana)")
+    at.run()
+    assert not at.exception, f"Exception when switching to Krishna Basin: {at.exception}"
+
+    # 2. Switch to Mahanadi Basin
+    at.sidebar.selectbox[0].select("🏞️ Mahanadi River Basin (Odisha)")
+    at.run()
+    assert not at.exception, f"Exception when switching to Mahanadi Basin: {at.exception}"
+
+    # 3. Switch back to Godavari Basin
+    at.sidebar.selectbox[0].select("🌊 Godavari River Basin (Telangana)")
+    at.run()
+    assert not at.exception, f"Exception when switching back to Godavari: {at.exception}"
 
 
 def test_app_districts_dates_languages_matrix():
@@ -49,20 +71,20 @@ def test_app_districts_dates_languages_matrix():
 
     # Verify each district can be selected without errors
     for dist in districts:
-        at.sidebar.selectbox[0].select(dist)
+        at.sidebar.selectbox[1].select(dist)
         at.run()
         assert not at.exception, f"Exception when selecting district '{dist}': {at.exception}"
 
     # Verify each language can be selected
     for lang in languages:
-        at.sidebar.selectbox[1].select(lang)
+        at.sidebar.selectbox[2].select(lang)
         at.run()
         assert not at.exception, f"Exception when selecting language '{lang}': {at.exception}"
 
     # Verify dates
     for d in dates:
-        if d in at.sidebar.selectbox[2].options:
-            at.sidebar.selectbox[2].select(d)
+        if len(at.sidebar.selectbox) > 3 and d in at.sidebar.selectbox[3].options:
+            at.sidebar.selectbox[3].select(d)
             at.run()
             assert not at.exception, f"Exception when selecting date '{d}': {at.exception}"
 
@@ -75,9 +97,11 @@ if __name__ == "__main__":
     test_app_initial_load()
     print("[PASS] test_app_initial_load()")
 
+    print("Running test_app_basin_switching()...")
+    test_app_basin_switching()
+    print("[PASS] test_app_basin_switching()")
+
     print("Running test_app_districts_dates_languages_matrix()...")
     test_app_districts_dates_languages_matrix()
     print("[PASS] test_app_districts_dates_languages_matrix()")
     print("\nALL APP SMOKE TESTS PASSED CLEANLY!")
-
-

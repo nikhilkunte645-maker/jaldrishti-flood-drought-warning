@@ -1,0 +1,151 @@
+godavari:
+  id: godavari
+  name: Godavari River Basin
+  primary_gauge: Bhadrachalam (Bhadradri Kothagudem)
+  state: Telangana
+  lat: 17.55
+  lon: 80.62
+  catchment_area_sqkm: 312812
+  flood_threshold_m3s: 80.89
+  danger_levels_ft:
+    warning_level_1: 43.0
+    danger_level_2: 48.0
+    highest_flood_level_hfl: 53.0
+    historical_peak_crest_2022: 71.3
+  upstream_dam_nodes:
+    - name: Sriram Sagar Dam (SRSP)
+      distance_km: 320
+      capacity_tmc: 90.3
+    - name: Kadam Reservoir
+      distance_km: 260
+      capacity_tmc: 7.6
+    - name: Medigadda (Kaleshwaram Barrage)
+      distance_km: 180
+      capacity_tmc: 16.1
+  districts:
+    bhadradri_kothagudem:
+      name: Bhadradri Kothagudem (Bhadrachalam)
+      lat: 17.55
+      lon: 80.62
+      threshold_m3s: 80.89
+    mulugu:
+      name: Mulugu (Ramappa / Eturnagaram)
+      lat: 18.19
+      lon: 80.00
+      threshold_m3s: 13.63
+    nizamabad:
+      name: Nizamabad (Sriram Sagar Dam)
+      lat: 18.67
+      lon: 78.09
+      threshold_m3s: 7.21
+    adilabad:
+      name: Adilabad (Kadam / Godavari Reach)
+      lat: 19.67
+      lon: 78.53
+      threshold_m3s: 6.66
+  supported_languages:
+    - code: en
+      label: English
+    - code: te
+      label: "తెలుగు (Telugu)"
+    - code: hi
+      label: "हिन्दी (Hindi)"
+  model_status: fully_calibrated
+  calibration_notes: "Calibrated on 10 years (2015-2025) of ECMWF GloFAS and Open-Meteo reanalysis with XGBoost & TreeSHAP."
+
+krishna:
+  id: krishna
+  name: Krishna River Basin
+  primary_gauge: Prakasam Barrage (Vijayawada)
+  state: Andhra Pradesh / Telangana
+  lat: 16.51
+  lon: 80.62
+  catchment_area_sqkm: 258948
+  flood_threshold_m3s: 125.50
+  danger_levels_ft:
+    warning_level_1: 17.75
+    danger_level_2: 21.0
+    highest_flood_level_hfl: 25.5
+    historical_peak_crest_2019: 28.2
+  upstream_dam_nodes:
+    - name: Nagarjuna Sagar Dam
+      distance_km: 140
+      capacity_tmc: 312.0
+    - name: Srisailam Reservoir
+      distance_km: 280
+      capacity_tmc: 215.8
+    - name: Pulichintala Project
+      distance_km: 75
+      capacity_tmc: 45.7
+  districts:
+    krishna_vijayawada:
+      name: Krishna (Vijayawada / Prakasam)
+      lat: 16.51
+      lon: 80.62
+      threshold_m3s: 125.50
+    guntur:
+      name: Guntur (Amaravati Reach)
+      lat: 16.30
+      lon: 80.44
+      threshold_m3s: 98.20
+    nalgonda:
+      name: Nalgonda (Nagarjuna Sagar Reach)
+      lat: 17.05
+      lon: 79.27
+      threshold_m3s: 85.00
+  supported_languages:
+    - code: en
+      label: English
+    - code: te
+      label: "తెలుగు (Telugu)"
+    - code: hi
+      label: "हिन्दी (Hindi)"
+  model_status: heuristic_transfer
+  calibration_notes: "Heuristic transfer mode: requires 3-5 years of localized gauge data for full XGBoost/TreeSHAP weight calibration."
+
+mahanadi:
+  id: mahanadi
+  name: Mahanadi River Basin
+  primary_gauge: Mundali Weir (Cuttack)
+  state: Odisha
+  lat: 20.46
+  lon: 85.88
+  catchment_area_sqkm: 141589
+  flood_threshold_m3s: 210.00
+  danger_levels_ft:
+    warning_level_1: 82.5
+    danger_level_2: 86.0
+    highest_flood_level_hfl: 97.2
+    historical_peak_crest_2011: 101.4
+  upstream_dam_nodes:
+    - name: Hirakud Dam
+      distance_km: 290
+      capacity_tmc: 204.0
+    - name: Naraj Barrage
+      distance_km: 18
+      capacity_tmc: 8.5
+  districts:
+    cuttack_mundali:
+      name: Cuttack (Mundali Weir)
+      lat: 20.46
+      lon: 85.88
+      threshold_m3s: 210.00
+    sambalpur:
+      name: Sambalpur (Hirakud Downstream)
+      lat: 21.47
+      lon: 83.97
+      threshold_m3s: 185.00
+    puri_delta:
+      name: Puri (Mahanadi Delta Coast)
+      lat: 19.81
+      lon: 85.83
+      threshold_m3s: 95.00
+  supported_languages:
+    - code: en
+      label: English
+    - code: hi
+      label: "हिन्दी (Hindi)"
+    - code: or
+      label: "ଓଡ଼ିଆ (Odia)"
+  model_status: heuristic_transfer
+  calibration_notes: "Heuristic transfer mode: requires 3-5 years of localized gauge data for full XGBoost/TreeSHAP weight calibration."

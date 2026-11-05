@@ -35,7 +35,13 @@ DEFAULT_BASIN_COORDS = {
     "nizamabad": {"name": "Nizamabad", "lat": 18.67, "lon": 78.09, "slug": "nizamabad"},
     "adilabad": {"name": "Adilabad", "lat": 19.67, "lon": 78.53, "slug": "adilabad"},
     "krishna": {"name": "Krishna Basin (Vijayawada)", "lat": 16.51, "lon": 80.62, "slug": "krishna_vijayawada"},
+    "krishna_vijayawada": {"name": "Krishna (Vijayawada)", "lat": 16.51, "lon": 80.62, "slug": "krishna_vijayawada"},
+    "guntur": {"name": "Guntur (Amaravati Reach)", "lat": 16.30, "lon": 80.44, "slug": "guntur"},
+    "nalgonda": {"name": "Nalgonda (Nagarjuna Sagar)", "lat": 17.05, "lon": 79.27, "slug": "nalgonda"},
     "mahanadi": {"name": "Mahanadi Basin (Cuttack)", "lat": 20.46, "lon": 85.88, "slug": "mahanadi_cuttack"},
+    "cuttack_mundali": {"name": "Cuttack (Mundali Weir)", "lat": 20.46, "lon": 85.88, "slug": "cuttack_mundali"},
+    "sambalpur": {"name": "Sambalpur (Hirakud)", "lat": 21.47, "lon": 83.97, "slug": "sambalpur"},
+    "puri_delta": {"name": "Puri (Mahanadi Delta)", "lat": 19.81, "lon": 85.83, "slug": "puri_delta"},
 }
 
 CACHE_TTL_SECONDS = 3 * 3600  # 3 hours
