@@ -99,3 +99,4 @@ A single aggregated "water score" is dangerous and unscientific because fluvial 
 - **Tab 1 (`Rapid Flood Inundation`):** Focuses exclusively on hourly to 72h river crest dynamics, hydrographs, What-If hydraulic stress-testing, and rapid emergency WhatsApp broadcasts.
 - **Tab 2 (`Meteorological & Agricultural Drought`):** Analyzes multi-month Standardized Precipitation Indices (**SPI-1** for 30-day meteorological deficit, **SPI-3** for 90-day agricultural deficit) and **Soil Moisture Z-Score Anomalies** over 24-month rolling trajectories, delivering agronomic contingency plans to Rythu Bharosa Kendras (RBKs).
 - Combining them into a single tab creates visual clutter and operational ambiguity for emergency managers. Decoupling them reflects professional hydro-informatics practice.
+

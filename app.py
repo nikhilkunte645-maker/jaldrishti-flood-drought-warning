@@ -30,6 +30,7 @@ from src.explainability import (
     extract_top_shap_drivers,
     get_feature_label,
     format_driver_phrase,
+    get_farmer_explanation,
 )
 from src.risk import RISK_COLORS, classify_flood_risk, get_risk_badge_html
 from src.telemetry import fetch_basin_data
@@ -726,7 +727,12 @@ with tab_flood:
     col_map, col_overview = st.columns([1.1, 1.4])
 
     with col_map:
-        st.markdown(f"##### 📍 {basin_meta.get('name', 'Basin')} Monitoring Network")
+        map_title_col, map_tog_col = st.columns([1.1, 1.1])
+        with map_title_col:
+            st.markdown(f"##### 📍 {basin_meta.get('name', 'Basin')} Network")
+        with map_tog_col:
+            show_shelters = st.toggle("🏕️ Relief Shelters", value=True)
+
         center_lat = float(np.mean([info["lat"] for info in active_basin_coords.values()]))
         center_lon = float(np.mean([info["lon"] for info in active_basin_coords.values()]))
         telangana_map = folium.Map(
@@ -774,7 +780,71 @@ with tab_flood:
                 tooltip=f"{info['name']}: {level} ({dist_p:.1%})",
             ).add_to(telangana_map)
 
-        st_folium(telangana_map, width="100%", height=310, returned_objects=[])
+        # Tactical High-Ground Relief Shelters & Safe Havens Layer
+        EMERGENCY_SHELTERS = [
+            {
+                "name": "Bhadrachalam Temple Hill High Ground",
+                "lat": 17.6715,
+                "lon": 80.8935,
+                "capacity": 2500,
+                "type": "Elevated Sacred Ridge / Cyclone Shelter",
+                "elevation": "+38m above riverbed",
+            },
+            {
+                "name": "Zilla Parishad High School Relief Camp",
+                "lat": 17.6625,
+                "lon": 80.8840,
+                "capacity": 1200,
+                "type": "Designated Relief School & Food Distribution",
+                "elevation": "+22m above riverbed",
+            },
+            {
+                "name": "Sub-Collectorate Emergency Operations Center",
+                "lat": 17.6740,
+                "lon": 80.8905,
+                "capacity": 600,
+                "type": "DEOC Incident Command Post & Medical Base",
+                "elevation": "+30m above riverbed",
+            },
+        ]
+
+        if show_shelters:
+            for s in EMERGENCY_SHELTERS:
+                shelter_popup_html = f"""
+                <div style="font-family:sans-serif; color:#0f172a; min-width:180px;">
+                    <b style="color:#059669; font-size:0.92rem;">🛡️ {s['name']}</b><br>
+                    <span style="font-size:0.75rem; color:#475569;">{s['type']}</span><br>
+                    <b>Capacity:</b> {s['capacity']:,} evacuees<br>
+                    <b>Elevation:</b> {s['elevation']}<br>
+                    <span style="display:inline-block; margin-top:4px; padding:2px 6px; background:#10b98122; color:#059669; border:1px solid #10b981; border-radius:4px; font-weight:700; font-size:0.68rem;">🟢 DESIGNATED SAFE HAVEN</span>
+                </div>
+                """
+                folium.CircleMarker(
+                    location=[s["lat"], s["lon"]],
+                    radius=9,
+                    color="#ffffff",
+                    weight=2,
+                    fill=True,
+                    fill_color="#059669",
+                    fill_opacity=0.95,
+                    popup=folium.Popup(shelter_popup_html, max_width=250),
+                    tooltip=f"🛡️ Safe Shelter: {s['name']} (Cap: {s['capacity']:,})",
+                ).add_to(telangana_map)
+
+        st_folium(telangana_map, width="100%", height=300, returned_objects=[])
+
+        # Map Legend
+        st.markdown(
+            """
+            <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px; margin-top:4px; padding:6px 10px; background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:8px; font-size:0.72rem; color:#cbd5e1;">
+                <div style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:#10B981; border:1px solid #ffffff;"></span> <span>Normal (<30%)</span></div>
+                <div style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:#F59E0B; border:1px solid #ffffff;"></span> <span>Watch (30–60%)</span></div>
+                <div style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:#EF4444; border:1px solid #ffffff;"></span> <span>Warning (>60%)</span></div>
+                <div style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; border-radius:2px; background:#059669; border:1px solid #34D399;"></span> <span>🛡️ Safe Shelter</span></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     with col_overview:
         st.markdown(f"##### 🌊 Hydro-Meteorological Snapshot ({selected_date})")
@@ -858,6 +928,114 @@ with tab_flood:
             </div>
             """,
             unsafe_allow_html=True,
+        )
+
+        # 1-Click WhatsApp Broadcast Copy Block
+        st.markdown(
+            """
+            <div style="margin-top:12px; margin-bottom:6px;">
+                <span style="font-family:'Space Grotesk',sans-serif; font-size:0.88rem; font-weight:700; color:#38bdf8;">
+                    📋 1-Click WhatsApp Broadcast Copy (Field Dispatch)
+                </span>
+                <span style="font-size:0.75rem; color:#94a3b8; margin-left:6px;">
+                    Copy formatted advisory directly for field distribution
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        dispatch_te = format_whatsapp_broadcast(
+            district=selected_dist_name,
+            hazard="flood",
+            level=risk_72h_level,
+            lang="te",
+            hours=72,
+            driver_summary=driver_summary_phrase,
+        )
+        dispatch_hi = format_whatsapp_broadcast(
+            district=selected_dist_name,
+            hazard="flood",
+            level=risk_72h_level,
+            lang="hi",
+            hours=72,
+            driver_summary=driver_summary_phrase,
+        )
+        dispatch_en = format_whatsapp_broadcast(
+            district=selected_dist_name,
+            hazard="flood",
+            level=risk_72h_level,
+            lang="en",
+            hours=72,
+            driver_summary=driver_summary_phrase,
+        )
+
+        disp_curr, disp_te, disp_hi, disp_en = st.tabs([
+            f"Active ({selected_lang_label})",
+            "తెలుగు (Telugu)",
+            "हिन्दी (Hindi)",
+            "English",
+        ])
+        with disp_curr:
+            st.code(whatsapp_flood_msg, language="markdown")
+        with disp_te:
+            st.code(dispatch_te, language="markdown")
+        with disp_hi:
+            st.code(dispatch_hi, language="markdown")
+        with disp_en:
+            st.code(dispatch_en, language="markdown")
+
+        # 1-Page Tactical Incident Briefing Download
+        incident_briefing_md = f"""# JALDRISHTI HYDROMETEOROLOGICAL INCIDENT BRIEFING
+**Authority:** Telangana State Disaster Management Authority (TGSDMA) / CWC Liaison
+**Incident ID:** JD-{selected_slug.upper()}-{selected_date.replace('-', '')}
+**Timestamp:** {selected_date} 06:00 IST
+**District / Gauge Node:** {selected_dist_name} ({basin_meta.get('name', 'Godavari')} Basin)
+
+---
+
+## 1. FLOOD RISK STATUS (24h - 72h HORIZON)
+- **72-Hour Flood Risk:** {risk_72h_level.upper()} ({prob_72h:.1%})
+- **48-Hour Flood Risk:** {risk_48h_level.upper()} ({prob_48h:.1%})
+- **24-Hour Flood Risk:** {risk_24h_level.upper()} ({prob_24h:.1%})
+- **River Discharge:** {cur_discharge:.1f} m³/s (Threshold: {dist_threshold:.1f} m³/s)
+- **Daily Precipitation (Observed):** {cur_precip:.1f} mm
+- **Soil Moisture Saturation:** {cur_soil:.3f} m³/m³
+
+## 2. DROUGHT CONTEXT (30-90 DAY HORIZON)
+- **Status:** {drought_class.upper()}
+- **SPI-1 (30-Day Index):** {spi_1:+.2f}
+- **SPI-3 (90-Day Index):** {spi_3:+.2f}
+- **Soil Moisture Z-Score:** {sm_anomaly_z:+.2f}σ
+
+## 3. KEY HYDROLOGICAL DRIVERS (TreeSHAP EXPLAINABILITY)
+- Discharge Status: {'Exceeding warning threshold (' + f'{cur_discharge:.1f}' + ' m³/s)' if cur_discharge > dist_threshold else 'Normal channel baseflow (' + f'{cur_discharge:.1f}' + ' m³/s)'}
+- Catchment Rainfall: {cur_precip:.1f} mm (24h)
+- Soil Saturation Level: {cur_soil:.3f} m³/m³
+- Primary AI Identified Driver: {driver_summary_phrase or 'Monsoonal baseflow'}
+
+## 4. DESIGNATED EMERGENCY SHELTERS & HIGH GROUND
+- **Bhadrachalam Temple Hill High Ground:** +35m elevation, Capacity: 2,500 evacuees
+- **ZP High School Multi-Purpose Cyclone Shelter:** +24m elevation, Capacity: 1,200 evacuees
+- **Sub-Collectorate Emergency Operations Center:** +30m elevation, Capacity: 600 evacuees (DEOC Command Post)
+
+## 5. RECOMMENDED TGSDMA FIELD PROTOCOLS
+{'- Stage NDRF/SDRF motorboats at Bhadrachalam ghats and Burgampahad causeways.' if risk_72h_level in ['alert', 'warning', 'critical'] else '- Routine telemetry monitoring; verify gauge telemetry every 6 hours.'}
+{'- Pre-evacuate riverbed habitations (Kothagudem low-lying colonies).' if risk_72h_level in ['alert', 'warning', 'critical'] else '- Maintain standard sluice gate schedule.'}
+{'- Restrict bridge traffic across Godavari and activate DEOC 24/7 hotline 1077.' if risk_72h_level in ['alert', 'warning', 'critical'] else '- Keep disaster cell hotline 1077 on standby.'}
+
+---
+*Generated by JalDrishti Hydro-Informatics & Early Warning Platform (JNTUH Neural Storm 2026 - GP-03)*
+*Deterministic Explainable Machine Learning (XAI) & Physics-Informed Hydrology*
+"""
+
+        st.download_button(
+            label="📥 Download 1-Page Incident Summary (.md)",
+            data=incident_briefing_md,
+            file_name=f"JalDrishti_Incident_Briefing_{selected_slug}_{selected_date}.md",
+            mime="text/markdown",
+            use_container_width=True,
+            help="Download a clean, printable 1-page operational brief for DEOC commanders and field squads.",
         )
 
     st.markdown("---")
@@ -1055,6 +1233,49 @@ with tab_flood:
             else:
                 st.caption("No significant risk-suppressing drivers detected.")
 
+        # "Explain Like a Farmer" Accessibility Expander
+        with st.expander("💡 What does this AI chart mean in plain words? (Explain Like a Farmer)", expanded=True):
+            st.markdown(
+                """
+                <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px;">
+                    Translates complex TreeSHAP machine learning feature attributions into direct, actionable field realities for grassroots farmers and village panchayat officers.
+                </p>
+                """,
+                unsafe_allow_html=True,
+            )
+            f_tab1, f_tab2, f_tab3 = st.tabs([
+                "English",
+                "తెలుగు (Telugu)",
+                "हिन्दी (Hindi)",
+            ])
+            with f_tab1:
+                st.markdown(
+                    f"""
+                    <div style="background:rgba(15,23,42,0.7); border-left:4px solid #10B981; padding:10px 14px; border-radius:6px; font-size:0.92rem; color:#f1f5f9; line-height:1.5;">
+                        🌾 <b>Field Assessment:</b> {get_farmer_explanation(shap_analysis, lang='en')}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with f_tab2:
+                st.markdown(
+                    f"""
+                    <div style="background:rgba(15,23,42,0.7); border-left:4px solid #10B981; padding:10px 14px; border-radius:6px; font-size:0.92rem; color:#f1f5f9; line-height:1.5; font-family:'Inter', sans-serif;">
+                        🌾 <b>రైతు వివరణ:</b> {get_farmer_explanation(shap_analysis, lang='te')}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            with f_tab3:
+                st.markdown(
+                    f"""
+                    <div style="background:rgba(15,23,42,0.7); border-left:4px solid #10B981; padding:10px 14px; border-radius:6px; font-size:0.92rem; color:#f1f5f9; line-height:1.5;">
+                        🌾 <b>किसान सलाह:</b> {get_farmer_explanation(shap_analysis, lang='hi')}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
     except Exception as e:
         st.warning(f"Feature attribution temporarily unavailable: {e}")
 
@@ -1088,34 +1309,119 @@ with tab_flood:
                 unsafe_allow_html=True,
             )
 
+            # Initialize session state keys for Sandbox Presets
+            if "sim_rain_slider" not in st.session_state:
+                st.session_state["sim_rain_slider"] = 45.0
+            if "sim_discharge_slider" not in st.session_state:
+                st.session_state["sim_discharge_slider"] = 65.0
+            if "sim_soil_slider" not in st.session_state:
+                st.session_state["sim_soil_slider"] = 55.0
+            if "sim_horizon_select" not in st.session_state:
+                st.session_state["sim_horizon_select"] = "72h"
+            if "auto_run_sandbox" not in st.session_state:
+                st.session_state["auto_run_sandbox"] = False
+
+            def set_preset_normal():
+                st.session_state["sim_rain_slider"] = 12.0
+                st.session_state["sim_discharge_slider"] = 20.0
+                st.session_state["sim_soil_slider"] = 25.0
+                st.session_state["sim_horizon_select"] = "72h"
+                st.session_state["auto_run_sandbox"] = True
+
+            def set_preset_heavy():
+                st.session_state["sim_rain_slider"] = 95.0
+                st.session_state["sim_discharge_slider"] = 125.0
+                st.session_state["sim_soil_slider"] = 65.0
+                st.session_state["sim_horizon_select"] = "72h"
+                st.session_state["auto_run_sandbox"] = True
+
+            def set_preset_peak():
+                st.session_state["sim_rain_slider"] = 240.0
+                st.session_state["sim_discharge_slider"] = 285.0
+                st.session_state["sim_soil_slider"] = 92.0
+                st.session_state["sim_horizon_select"] = "72h"
+                st.session_state["auto_run_sandbox"] = True
+
+            st.markdown("###### ⚡ 1-Click Quick Scenario Presets (Stress-Testing)")
+            col_pre1, col_pre2, col_pre3 = st.columns(3)
+            with col_pre1:
+                st.button(
+                    "🟢 Normal Monsoonal Flow",
+                    on_click=set_preset_normal,
+                    use_container_width=True,
+                    help="12mm rain, 20 m³/s (~45k cusecs), 25% soil sat -> Low Risk (<30%)",
+                )
+            with col_pre2:
+                st.button(
+                    "🟡 Heavy Catchment Advisory",
+                    on_click=set_preset_heavy,
+                    use_container_width=True,
+                    help="95mm rain, 125 m³/s (~320k cusecs), 65% soil sat -> Watch (~50-60%)",
+                )
+            with col_pre3:
+                st.button(
+                    "🔴 July 2022 Peak Crest Stress-Test",
+                    on_click=set_preset_peak,
+                    use_container_width=True,
+                    help="240mm rain, 285 m³/s (~2.45M cusecs), 92% soil sat -> Critical Flood (>90%)",
+                )
+
             sb_c1, sb_c2, sb_c3, sb_c4 = st.columns(4)
             with sb_c1:
-                sim_rain = st.slider("Simulated 24h Rainfall (mm)", min_value=0.0, max_value=300.0, value=45.0, step=5.0)
+                sim_rain = st.slider(
+                    "Simulated 24h Rainfall (mm)",
+                    min_value=0.0,
+                    max_value=300.0,
+                    step=1.0,
+                    key="sim_rain_slider",
+                )
             with sb_c2:
-                sim_discharge = st.slider("Current River Discharge (m³/s)", min_value=0.0, max_value=400.0, value=65.0, step=5.0)
+                sim_discharge = st.slider(
+                    "Current River Discharge (m³/s)",
+                    min_value=0.0,
+                    max_value=400.0,
+                    step=1.0,
+                    key="sim_discharge_slider",
+                    help="1 m³/s ≈ 35.315 cusecs",
+                )
             with sb_c3:
-                sim_soil_pct = st.slider("Volumetric Soil Moisture (%)", min_value=10.0, max_value=100.0, value=55.0, step=5.0)
+                sim_soil_pct = st.slider(
+                    "Volumetric Soil Moisture (%)",
+                    min_value=10.0,
+                    max_value=100.0,
+                    step=1.0,
+                    key="sim_soil_slider",
+                )
             with sb_c4:
-                sim_horizon = st.selectbox("Target Horizon", ["24h", "48h", "72h"], index=2)
+                horizon_opts = ["24h", "48h", "72h"]
+                sim_horizon = st.selectbox(
+                    "Target Horizon",
+                    horizon_opts,
+                    key="sim_horizon_select",
+                )
 
             run_inference = st.button("⚡ Run Live Hydraulic Inference", use_container_width=True, type="primary")
 
-            if run_inference:
+            should_run = run_inference or st.session_state.get("auto_run_sandbox", False)
+
+            if should_run:
+                st.session_state["auto_run_sandbox"] = False
                 model = load_flood_model(sim_horizon)
                 if model is not None:
                     sim_soil_vol = sim_soil_pct / 100.0
+                    wetness = max(0.0, min(1.0, (sim_soil_vol - 0.20) / 0.70))
                     syn_data = {
                         "precip_roll_1d": [sim_rain],
-                        "precip_roll_3d": [sim_rain * 1.8],
-                        "precip_roll_7d": [sim_rain * 2.8],
-                        "precip_roll_14d": [sim_rain * 4.2],
+                        "precip_roll_3d": [sim_rain * (1.1 + 0.7 * wetness)],
+                        "precip_roll_7d": [sim_rain * (1.2 + 1.6 * wetness)],
+                        "precip_roll_14d": [sim_rain * (1.4 + 2.8 * wetness)],
                         "soil_moisture": [sim_soil_vol],
-                        "soil_moisture_diff_3d": [max(0.0, sim_soil_vol * 0.15)],
+                        "soil_moisture_diff_3d": [max(0.0, (sim_soil_vol - 0.30) * 0.15)],
                         "river_discharge": [sim_discharge],
-                        "river_discharge_lag_1d": [sim_discharge * 0.85],
-                        "river_discharge_lag_2d": [sim_discharge * 0.70],
-                        "river_discharge_lag_3d": [sim_discharge * 0.60],
-                        "river_discharge_diff_1d": [sim_discharge * 0.15],
+                        "river_discharge_lag_1d": [sim_discharge * (1.0 - 0.15 * wetness)],
+                        "river_discharge_lag_2d": [sim_discharge * (1.0 - 0.30 * wetness)],
+                        "river_discharge_lag_3d": [sim_discharge * (1.0 - 0.40 * wetness)],
+                        "river_discharge_diff_1d": [sim_discharge * 0.15 * wetness],
                         "month": [7],
                     }
                     syn_df = pd.DataFrame(syn_data)

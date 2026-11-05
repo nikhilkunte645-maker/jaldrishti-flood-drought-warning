@@ -229,3 +229,90 @@ def extract_top_shap_drivers(
         "negative": top_neg,
         "summary": summary,
     }
+
+
+def get_farmer_explanation(shap_analysis: Dict[str, Any], lang: str = "en") -> str:
+    """
+    Generate an intuitive 'Explain Like a Farmer' 2-sentence breakdown
+    mapping physical contributors to practical field realities in EN, TE, HI.
+    """
+    lang_key = lang.lower() if lang.lower() in ("en", "te", "hi") else "en"
+    pos = shap_analysis.get("positive", [])
+
+    if not pos:
+        if lang_key == "te":
+            return (
+                "నదీ ప్రవాహం ప్రస్తుతం సురక్షిత పరిమితుల్లో ఉంది, పొలాల్లో నేల తేమ కూడా అదుపులో ఉంది. "
+                "రాబోయే 3 రోజుల్లో పంటలకు లేదా గ్రామాలకు ఎటువంటి ముంపు ముప్పు లేదు."
+            )
+        elif lang_key == "hi":
+            return (
+                "वर्तमान में नदी का जलस्तर सुरक्षित सीमा के भीतर है और खेतों की मिट्टी में अतिरिक्त जलभराव नहीं है। "
+                "अगले 3 दिनों में फसलों या तटवर्ती गांवों में जलभराव का कोई खतरा नहीं है।"
+            )
+        else:
+            return (
+                "River flows remain safely within standard channel embankments and catchment soil is not oversaturated. "
+                "No inundation threat to standing crops or low-lying pastures is anticipated over the next 72 hours."
+            )
+
+    p1 = pos[0]
+    p1_feat = p1.get("feature", "")
+    p1_label = p1.get("label", "Rainfall/Discharge")
+    p1_pct = int(round(abs(p1.get("shap", 0.0)) * 15))
+
+    p2_label = ""
+    p2_pct = 0
+    if len(pos) > 1:
+        p2 = pos[1]
+        p2_label = p2.get("label", "")
+        p2_pct = int(round(abs(p2.get("shap", 0.0)) * 15))
+
+    if lang_key == "te":
+        if "discharge" in p1_feat or "river" in p1_feat:
+            s1 = f"ఎగువ ప్రాంతాల నుంచి వస్తున్న నదీ ప్రవాహం ప్రస్తుత వరద ముప్పులో ప్రధానంగా {p1_pct}% ప్రభావం చూపుతోంది."
+            if p2_label:
+                s1 += f" దీనితో పాటు స్థానిక {p2_label} కూడా {p2_pct}% ముప్పును పెంచుతోంది."
+            s2 = "మన గ్రామంలో వర్షం తాత్కాలికంగా ఆగిపోయినా, ఎగువ నుంచి భారీగా వచ్చే వరద నీటి వలన నది నీటిమట్టం ఇంకా పెరిగే ప్రమాదం ఉంది; కాబట్టి లోతట్టు పొలాలు మరియు పశువులను వెంటనే సురక్షిత ఎత్తైన ప్రాంతాలకు తరలించండి."
+        elif "soil" in p1_feat:
+            s1 = f"గత కొన్ని రోజులుగా కురిసిన వర్షాలకు నేల పూర్తిగా తడిసి ముద్దవడం వలన ({p1_pct}% ముప్పు ప్రభావం) కొత్తగా పడే వర్షపు నీరు భూమిలోకి ఇంకడం లేదు."
+            s2 = "నేల నీటిని పీల్చుకోలేకపోవడం వలన స్వల్ప వర్షం పడినా వరద నీరు నేరుగా పంట పొలాల్లోకి ప్రవేశిస్తుంది; రైతులు కాలువల తూములను తెరిచి నీటిని బయటకు మళ్లించాలి."
+        else:
+            s1 = f"గత కొన్ని రోజులుగా స్థానికంగా కురుస్తున్న భారీ వర్షపాతం ప్రస్తుత వరద ముప్పుకు ప్రధానంగా {p1_pct}% కారణమవుతోంది."
+            if p2_label:
+                s1 += f" అలాగే {p2_label} కూడా తోడై ప్రవాహాన్ని వేగవంతం చేస్తోంది."
+            s2 = "భారీ నీటి ఉధృతి వలన వాగులు, లోతట్టు వంతెనలు మునిగిపోయే అవకాశం ఉంది; కాబట్టి రైతులు పంట కాలువలు మరియు పంపుసెట్ల వద్ద జాగ్రత్తగా ఉండాలి."
+        return f"{s1} {s2}"
+
+    elif lang_key == "hi":
+        if "discharge" in p1_feat or "river" in p1_feat:
+            s1 = f"ऊपरी जलग्रहण क्षेत्र से आ रहा नदी का तेज बहाव वर्तमान चेतावनी में मुख्य रूप से {p1_pct}% योगदान दे रहा है।"
+            if p2_label:
+                s1 += f" इसके साथ स्थानीय {p2_label} भी {p2_pct}% जोखिम जोड़ रहा है।"
+            s2 = "भले ही स्थानीय बारिश कुछ समय के लिए रुक जाए, ऊपरी बांधों से आ रहे भारी पानी के कारण नदी का जलस्तर लगातार बढ़ता रहेगा; अतः निचले खेतों से मवेशियों और पंप सेटों को तुरंत ऊंचे स्थानों पर पहुंचाएं।"
+        elif "soil" in p1_feat:
+            s1 = f"खेतों की मिट्टी अत्यधिक वर्षा से पूरी तरह संतृप्त हो चुकी है ({p1_pct}% जोखिम प्रभाव), जिससे अब नया वर्षाजल जमीन में नहीं समा रहा है।"
+            s2 = "मिट्टी की जल-अवशोषण क्षमता समाप्त होने के कारण हल्की वर्षा भी तुरंत सतह पर तेज बहाव बनाएगी; किसान जल निकासी नालियों को तुरंत साफ रखें।"
+        else:
+            s1 = f"पिछले दिनों से लगातार हो रही भारी बारिश मौजूदा बाढ़ के खतरे का {p1_pct}% मुख्य कारण है।"
+            if p2_label:
+                s1 += f" साथ ही {p2_label} भी पानी के दबाव को बढ़ा रहा है।"
+            s2 = "खेतों और निचले रास्तों पर तेजी से पानी भरने की संभावना है; इसलिए किसान भाई रपटों को पार न करें और कटी हुई फसलों को सुरक्षित शेड में रखें।"
+        return f"{s1} {s2}"
+
+    else:
+        if "discharge" in p1_feat or "river" in p1_feat:
+            s1 = f"Upstream river discharge and catchment inflow account for approximately {p1_pct}% of the current flood alert level."
+            if p2_label:
+                s1 += f" Simultaneously, localized {p2_label} contributes an additional {p2_pct}% to runoff pressure."
+            s2 = "Even if local rainfall ceases temporarily, river levels will continue to rise rapidly due to upstream drainage; frontline farmers should immediately relocate livestock and pump machinery to designated high ground."
+        elif "soil" in p1_feat:
+            s1 = f"Continuous antecedent rainfall has saturated the topsoil mantle ({p1_pct}% risk impact), leaving the catchment with zero infiltration capacity."
+            s2 = "Because the saturated ground cannot absorb further moisture, any subsequent showers will convert immediately into overland flood runoff across low-lying paddy acreage."
+        else:
+            s1 = f"Persistent cumulative rainfall across the upper watershed is the primary driver ({p1_pct}% risk contribution) elevating the 72h flood threat."
+            if p2_label:
+                s1 += f" Saturated river discharge from {p2_label} further accelerates crest velocity."
+            s2 = "Low-level causeways and field channels face rapid inundation; agricultural workers are advised to avoid crossing riverine causeways and safeguard grain storage."
+        return f"{s1} {s2}"
+

@@ -28,6 +28,12 @@ Author: Solo Builder
   - *Phase 4 (Flood vs Drought Decoupling & Trilingual XAI)*: Built `src/explainability.py` extracting top-3 positive and negative TreeSHAP drivers in English, Telugu, and Hindi; upgraded WhatsApp cards in `src/alerts.py` with tiered civil defense actions (Stages 1-3) and official PRO review disclosure tag; restructured UI into 4 specialized tabs.
   - *Phase 5 (B2G Sustainability & Enterprise Documentation)*: Created `docs/ARCHITECTURE.md` (responsive Mermaid diagrams), `docs/BUSINESS_MODEL.md` (B2G model, ~₹1.5 Lakhs/district pilot pricing, ROI analysis), `docs/JUDGE_QA.md` (5 deep technical defenses), and `docs/PRESENTATION_KIT.md` (30s elevator pitch, 2-min demo script, risk register).
   - *Phase 6 (Audit, Browser Verification & Final Handoff)*: Executed 16/16 self-tests, 100% passing AppTest matrix, captured 6 high-res presentation-grade screenshots via Playwright, recompiled 6.56 MB publication PDF report, and completed objective audit (`docs/AUDIT_REPORT.md`: 9.63/10 composite rating).
+- [x] **Phase 12: Tactical Incident Export, Relief Shelters & Grassroots Farmer Explainers**:
+  - *1-Click Scenario Presets*: Implemented 3 preset buttons in What-If Sandbox (Normal Monsoonal Flow, Heavy Catchment Advisory, July 2022 Peak Crest Stress-Test) wired to `st.session_state` keys and wetness-scaled antecedent features.
+  - *1-Click WhatsApp Broadcast Copy & Incident Briefing Download*: Added trilingual dispatch copy tabs (Active, Telugu, Hindi, English) and 1-page tactical markdown incident summary download for field operators.
+  - *Tactical Relief Shelters Map Layer*: Added toggleable high-ground shelters (Bhadrachalam Temple Hill, ZP High School, Sub-Collectorate DEOC) with capacity and elevation popups + multi-tier map legend.
+  - *"Explain Like a Farmer" Expander*: Built `get_farmer_explanation` in `src/explainability.py` and embedded interactive trilingual expander below TreeSHAP attribution translating AI features into field reality.
+
 
 ---
 

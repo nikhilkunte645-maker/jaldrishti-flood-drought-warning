@@ -98,3 +98,4 @@ In a single monsoon flood event (such as the July 2022 Godavari flood at Bhadrac
 | **Vernacular Accessibility** | ⚠️ Generic automated translation | ⚠️ English / Formal Hindi | **✅ Trilingual (Telugu, Hindi, English) with Tiered Civil Actions** |
 | **Dual-Hazard Decoupling** | ❌ Flood only or drought only | ❌ Handled by separate ministries | **✅ Decoupled Flash Flood (24h-72h) vs SPI Drought (30-90d)** |
 | **Simulation Capability** | ❌ Static data display | ❌ Static historical reports | **✅ Interactive What-If Hydraulic Stress-Test Terminal** |
+

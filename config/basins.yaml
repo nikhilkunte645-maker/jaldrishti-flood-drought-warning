@@ -149,3 +149,4 @@ mahanadi:
       label: "ଓଡ଼ିଆ (Odia)"
   model_status: heuristic_transfer
   calibration_notes: "Heuristic transfer mode: requires 3-5 years of localized gauge data for full XGBoost/TreeSHAP weight calibration."
+
