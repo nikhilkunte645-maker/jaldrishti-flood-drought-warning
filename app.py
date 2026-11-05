@@ -21,6 +21,7 @@ from streamlit_folium import st_folium
 from src.alerts import get_alert
 from src.drought import get_drought_status
 from src.risk import RISK_COLORS, classify_flood_risk, get_risk_badge_html
+from src.telemetry import fetch_basin_data
 
 # ==============================================================================
 # ASSETS & BRANDING CONFIGURATION
@@ -520,23 +521,39 @@ with st.sidebar:
     else:
         selected_date = "2022-07-14"
 
+    # Telemetry Ingestion
+    @st.cache_data(ttl=1800)
+    def load_telemetry_cached(slug: str):
+        try:
+            return fetch_basin_data(slug, timeout_sec=2.5)
+        except Exception:
+            return {"mode": "LOCAL CACHE FALLBACK (OFFLINE)", "data_source": "Local Historical Fixture Cache"}, "LOCAL CACHE FALLBACK (OFFLINE)"
+
+    live_telemetry, telemetry_mode = load_telemetry_cached(selected_slug)
+
     st.markdown(
         """
         <div style="font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:700; color:#38BDF8; letter-spacing:0.08em; text-transform:uppercase; margin-top:14px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-            📡 AIR-GAPPED SYSTEM STATUS
+            📡 DUAL-MODE TELEMETRY STATUS
         </div>
         """,
         unsafe_allow_html=True,
     )
 
+    if "LIVE" in telemetry_mode:
+        badge_sidebar = '<span style="color:#10B981; font-weight:700;">🟢 LIVE TELEMETRY (OPEN-METEO)</span>'
+        badge_header = '<div style="display:inline-flex; align-items:center; gap:6px; background:rgba(16,185,129,0.18); border:1px solid #10B981; color:#10B981; padding:3px 10px; border-radius:20px; font-size:0.73rem; font-weight:700; margin-bottom:6px;">🟢 LIVE TELEMETRY - OPEN-METEO</div>'
+    else:
+        badge_sidebar = '<span style="color:#F59E0B; font-weight:700;">🟡 LOCAL CACHE FALLBACK (OFFLINE)</span>'
+        badge_header = '<div style="display:inline-flex; align-items:center; gap:6px; background:rgba(245,158,11,0.18); border:1px solid #F59E0B; color:#F59E0B; padding:3px 10px; border-radius:20px; font-size:0.73rem; font-weight:700; margin-bottom:6px;">🟡 LOCAL CACHE FALLBACK (OFFLINE)</div>'
+
     st.markdown(
-        """
+        f"""
         <div style="font-size:0.75rem; color:#94a3b8; line-height:1.45; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:10px 12px; margin-bottom:12px;">
-        <span style="color:#10B981; font-weight:600;">● Engine Online (Zero-API Air-Gapped)</span><br>
-        • Spatial Scope: 4 Basin Districts<br>
-        • Machine Learning: Gradient Boosted Trees (XGBoost)<br>
-        • Climatological SPI: Gamma Distribution<br>
-        • Telemetry Cache: Verified Valid
+        {badge_sidebar}<br>
+        • Ingestion: {live_telemetry.get('data_source', 'Open-Meteo & Local Cache')}<br>
+        • Resilience: Offline-capable with automatic live ingestion<br>
+        • Persistent Cache: 3-Hour TTL on Disk
         </div>
         """,
         unsafe_allow_html=True,
@@ -573,6 +590,9 @@ with col_status:
     dist_threshold = thresholds.get(selected_slug, 50.0)
     st.markdown(
         f"""
+        <div style="text-align: right; margin-bottom: 4px;">
+            {badge_header}
+        </div>
         <div class="jd-card" style="padding: 12px 16px; text-align: right; border-top: 3px solid #00F2FE;">
             <div style="font-family: 'Space Grotesk', sans-serif; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #94A3B8;">95th Pct Flood Threshold</div>
             <div style="font-family: 'Space Grotesk', sans-serif; font-size: 1.35rem; font-weight: 700; color: #00F2FE; letter-spacing: -0.5px;">{dist_threshold:.1f} <span style="font-size: 0.85rem; color: #94A3B8;">m³/s</span></div>
@@ -987,7 +1007,10 @@ with tab_dashboard:
                             <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #00F2FE; box-shadow: 0 0 10px #00F2FE;"></span>
                             <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: #00F2FE; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase;">Hydraulic Stress-Testing Terminal</span>
                         </div>
-                        <span style="font-family: 'Inter', monospace; font-size: 0.72rem; color: #94A3B8; background: rgba(0, 242, 254, 0.1); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0, 242, 254, 0.3);">LOCAL_AIRGAPPED_ENGINE v2.4</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="display:inline-flex; align-items:center; gap:5px; background:rgba(56,189,248,0.15); border:1px solid #38BDF8; color:#38BDF8; font-family:'Inter',sans-serif; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:4px;">🔵 HISTORICAL REPLAY / SIMULATION</span>
+                            <span style="font-family: 'Inter', monospace; font-size: 0.72rem; color: #94A3B8; background: rgba(0, 242, 254, 0.1); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0, 242, 254, 0.3);">LOCAL_AIRGAPPED_ENGINE v2.4</span>
+                        </div>
                     </div>
                     <p style="color: #94A3B8; font-size: 0.82rem; margin-bottom: 0px;">
                     Simulate non-linear hydraulic conditions by adjusting 24h precipitation, upstream river inflow, and volumetric soil saturation. Live inference is executed directly against local gradient-boosted trees.
@@ -1080,6 +1103,14 @@ with tab_dashboard:
 # TAB 2: HISTORICAL BACKTEST
 # ==============================================================================
 with tab_backtest:
+    st.markdown(
+        """
+        <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(56,189,248,0.18); border:1px solid #38BDF8; color:#38BDF8; padding:3px 12px; border-radius:20px; font-size:0.75rem; font-weight:700; margin-bottom:10px;">
+            🔵 HISTORICAL REPLAY / SIMULATION
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.markdown("### ⏪ Historic Event Replay: July 2022 Godavari Flood")
     st.markdown(
         "Between July 10 and July 18, 2022, the Godavari river basin experienced historic, unprecedented monsoon flooding. "
