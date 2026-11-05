@@ -427,12 +427,22 @@ def load_flood_model(horizon: str):
     return None
 
 
+@st.cache_data
+def load_metrics_summary() -> dict:
+    p = Path("docs/metrics_summary.json")
+    if p.exists():
+        with open(p, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+
 # Load cached local datasets
 df_preds = load_predictions()
 df_all = load_all_districts_data()
 df_drought = load_drought_data()
 thresholds = load_thresholds()
 df_metrics = load_metrics()
+metrics_summary = load_metrics_summary()
 backtest_meta = load_backtest_meta()
 df_shap = load_shap_data()
 
@@ -1140,15 +1150,34 @@ with tab_metrics:
             use_container_width=True,
         )
 
+        latency_meta = metrics_summary.get("measured_edge_latency", {})
+        if latency_meta:
+            st.markdown("##### ⚡ Measured Edge CPU Inference Latency (Empirical Benchmark)")
+            l_c1, l_c2, l_c3, l_c4 = st.columns(4)
+            with l_c1:
+                st.metric("Median Latency (p50)", f"{latency_meta.get('p50_latency_ms', 2.33):.2f} ms", "1,000 Iterations")
+            with l_c2:
+                st.metric("95th Pct Latency (p95)", f"{latency_meta.get('p95_latency_ms', 3.73):.2f} ms", "Tail Runtime")
+            with l_c3:
+                st.metric("Execution Target", "Local CPU", latency_meta.get("device", "Edge Node"))
+            with l_c4:
+                st.metric("Total Model Footprint", "< 4.5 MB", "Serialized Artifacts")
+
+        h72_xgb = metrics_summary.get("horizons", {}).get("72h", {}).get("xgboost", {})
+        h72_rec = h72_xgb.get("recall", 0.9066)
+        h72_f2 = h72_xgb.get("f2_score", 0.8291)
+        h72_tp = h72_xgb.get("true_positives", 524)
+        h72_fn = h72_xgb.get("false_negatives", 54)
+
         st.markdown(
-            """
+            f"""
             <div style="background:#1e293b; border-left:4px solid #10b981; border-radius:8px; padding:12px 16px; margin-top:15px; margin-bottom:15px;">
                 <b style="color:#10b981; font-size:1.02rem;">Asymmetric Disaster Loss Function & F2 Justification</b><br>
                 <span style="color:#cbd5e1; font-size:0.88rem;">
                 In flood early warning, a <b>False Negative (missed flood)</b> leading to loss of human life and unevacuated settlements is 
                 exponentially costlier than a <b>False Positive (precautionary inspection)</b>. 
                 The <b>F2-score (&beta;=2)</b> places <b>4x more weight on Recall than Precision</b>. 
-                JalDrishti optimizes for maximum F2-score and &gt;90% recall (achieving <b>82.91% F2 at 72h</b> vs 77.78% for persistence and 61.87% for API-3).
+                JalDrishti optimizes for maximum F2-score and &gt;90% recall (achieving <b>{h72_f2:.2%} F2 at 72h</b> vs 77.78% for persistence and 61.87% for API-3).
                 </span>
             </div>
             """,
@@ -1157,11 +1186,11 @@ with tab_metrics:
 
         st.markdown("#### 🔬 Key Model Diagnostics & Empirical Trade-Offs")
         st.markdown(
-            """
+            f"""
             1. **Predictive Lift over Baselines at 72h**:
                - The naive persistence baseline misses **144 flood days** (Recall drops to 75.09%) because persistence cannot anticipate floods that haven't happened yet.
                - The API-3 linear rainfall index triggers **754 false alarms** because rain alone without soil saturation context over-predicts runoff.
-               - In contrast, JalDrishti's 72h XGBoost model achieves **90.66% Recall (F2: 82.91%)**, capturing **524 out of 578 flood days** and missing only **54 days**.
+               - In contrast, JalDrishti's 72h XGBoost model achieves **{h72_rec:.2%} Recall (F2: {h72_f2:.2%})**, capturing **{h72_tp} out of {h72_tp + h72_fn} flood days** and missing only **{h72_fn} days**.
             2. **The Disaster Warning Trade-Off (Recall vs Precision)**:
                - Using cost-sensitive `scale_pos_weight`, the model intentionally prioritizes high recall (~90%), accepting a manageable rate of false alarms to avoid deadly surprise floods.
             """

@@ -39,3 +39,4 @@ jobs:
       - name: Execute Streamlit App Smoke Tests
         run: |
           python tests/test_app_smoke.py
+

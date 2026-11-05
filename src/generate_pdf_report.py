@@ -1,4 +1,5 @@
 import base64
+import json
 import os
 import sys
 from pathlib import Path
@@ -364,107 +365,11 @@ In disaster early warning, error consequences are fundamentally asymmetric:
         </tr>
     </thead>
     <tbody>
-        <tr class="highlight-row">
-            <td class="center-col"><strong>24h</strong></td>
-            <td><strong>JalDrishti (XGBoost)</strong></td>
-            <td class="num-col">78.50%</td>
-            <td class="num-col"><strong>94.70%</strong></td>
-            <td class="num-col">85.84%</td>
-            <td class="num-col"><strong>90.95%</strong></td>
-            <td class="num-col"><strong>0.9935</strong></td>
-            <td class="num-col">150</td>
-            <td class="num-col"><strong>30</strong></td>
-        </tr>
-        <tr>
-            <td class="center-col">24h</td>
-            <td>Naive Persistence</td>
-            <td class="num-col">88.94%</td>
-            <td class="num-col">88.75%</td>
-            <td class="num-col">88.84%</td>
-            <td class="num-col">88.79%</td>
-            <td class="num-col">0.5000</td>
-            <td class="num-col">53</td>
-            <td class="num-col">54</td>
-        </tr>
-        <tr>
-            <td class="center-col">24h</td>
-            <td>API-3 Linear Benchmark</td>
-            <td class="num-col">30.05%</td>
-            <td class="num-col">71.25%</td>
-            <td class="num-col">42.27%</td>
-            <td class="num-col">55.92%</td>
-            <td class="num-col">0.8752</td>
-            <td class="num-col">796</td>
-            <td class="num-col">138</td>
-        </tr>
-        <tr class="highlight-row">
-            <td class="center-col"><strong>48h</strong></td>
-            <td><strong>JalDrishti (XGBoost)</strong></td>
-            <td class="num-col">70.93%</td>
-            <td class="num-col"><strong>92.35%</strong></td>
-            <td class="num-col">80.24%</td>
-            <td class="num-col"><strong>87.06%</strong></td>
-            <td class="num-col"><strong>0.9859</strong></td>
-            <td class="num-col">218</td>
-            <td class="num-col"><strong>44</strong></td>
-        </tr>
-        <tr>
-            <td class="center-col">48h</td>
-            <td>Naive Persistence</td>
-            <td class="num-col">90.59%</td>
-            <td class="num-col">81.24%</td>
-            <td class="num-col">85.66%</td>
-            <td class="num-col">82.95%</td>
-            <td class="num-col">0.5000</td>
-            <td class="num-col">45</td>
-            <td class="num-col">100</td>
-        </tr>
-        <tr>
-            <td class="center-col">48h</td>
-            <td>API-3 Linear Benchmark</td>
-            <td class="num-col">34.08%</td>
-            <td class="num-col">73.92%</td>
-            <td class="num-col">46.65%</td>
-            <td class="num-col">59.91%</td>
-            <td class="num-col">0.8871</td>
-            <td class="num-col">762</td>
-            <td class="num-col">139</td>
-        </tr>
-        <tr class="highlight-row">
-            <td class="center-col"><strong>72h</strong></td>
-            <td><strong>JalDrishti (XGBoost)</strong></td>
-            <td class="num-col">62.79%</td>
-            <td class="num-col"><strong>90.66%</strong></td>
-            <td class="num-col">74.19%</td>
-            <td class="num-col"><strong>82.91%</strong></td>
-            <td class="num-col"><strong>0.9766</strong></td>
-            <td class="num-col">309</td>
-            <td class="num-col"><strong>54</strong></td>
-        </tr>
-        <tr>
-            <td class="center-col">72h</td>
-            <td>Naive Persistence</td>
-            <td class="num-col">87.56%</td>
-            <td class="num-col">75.09%</td>
-            <td class="num-col">80.84%</td>
-            <td class="num-col">77.28%</td>
-            <td class="num-col">0.5000</td>
-            <td class="num-col">61</td>
-            <td class="num-col">144</td>
-        </tr>
-        <tr>
-            <td class="center-col">72h</td>
-            <td>API-3 Linear Benchmark</td>
-            <td class="num-col">37.05%</td>
-            <td class="num-col">74.91%</td>
-            <td class="num-col">49.58%</td>
-            <td class="num-col">61.87%</td>
-            <td class="num-col">0.7915</td>
-            <td class="num-col">754</td>
-            <td class="num-col">145</td>
-        </tr>
+        {{METRICS_TABLE_ROWS}}
     </tbody>
 </table>
+
+{{LATENCY_BLOCK}}
 
 <div class="figure-container">
     <img src="{{IMG4}}" class="figure-img" alt="Model Metrics and F2 Loss Justification">
@@ -587,6 +492,66 @@ To close the critical "last-mile" communication gap, JalDrishti automatically sy
 </html>
 """
 
+    # Dynamic metric formatting from docs/metrics_summary.json
+    summary_path = DOCS_DIR / "metrics_summary.json"
+    table_rows = []
+    latency_block = ""
+    if summary_path.exists():
+        with open(summary_path, "r", encoding="utf-8") as f:
+            summary = json.load(f)
+
+        lat = summary.get("measured_edge_latency", {})
+        if lat:
+            latency_block = f"""
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:10px 14px; margin: 10px 0 16px 0; font-size:8.8pt;">
+                <strong>⚡ Verified Edge CPU Latency:</strong> Median (p50): <strong>{lat.get('p50_latency_ms')} ms</strong> | 95th Percentile (p95): <strong>{lat.get('p95_latency_ms')} ms</strong> across <strong>{lat.get('iterations'):,} iterations</strong> on single CPU core (Edge profile).
+            </div>
+            """
+
+        horizons = summary.get("horizons", {})
+        for h in ["24h", "48h", "72h"]:
+            h_data = horizons.get(h, {})
+            xgb = h_data.get("xgboost", {})
+            persist = h_data.get("naive_persistence", {})
+            api3 = h_data.get("api3_linear_benchmark", {})
+
+            table_rows.append(f"""
+            <tr class="highlight-row">
+                <td class="center-col"><strong>{h}</strong></td>
+                <td><strong>JalDrishti (XGBoost)</strong></td>
+                <td class="num-col">{xgb.get('precision', 0):.2%}</td>
+                <td class="num-col"><strong>{xgb.get('recall', 0):.2%}</strong></td>
+                <td class="num-col">{xgb.get('f1_score', 0):.2%}</td>
+                <td class="num-col"><strong>{xgb.get('f2_score', 0):.2%}</strong></td>
+                <td class="num-col"><strong>{xgb.get('roc_auc', 0):.4f}</strong></td>
+                <td class="num-col">{xgb.get('false_positives', 0)}</td>
+                <td class="num-col"><strong>{xgb.get('false_negatives', 0)}</strong></td>
+            </tr>
+            <tr>
+                <td class="center-col">{h}</td>
+                <td>Naive Persistence</td>
+                <td class="num-col">{persist.get('precision', 0):.2%}</td>
+                <td class="num-col">{persist.get('recall', 0):.2%}</td>
+                <td class="num-col">{persist.get('f1_score', 0):.2%}</td>
+                <td class="num-col">{persist.get('f2_score', 0):.2%}</td>
+                <td class="num-col">{persist.get('roc_auc', 0):.4f}</td>
+                <td class="num-col">{persist.get('false_positives', 0)}</td>
+                <td class="num-col">{persist.get('false_negatives', 0)}</td>
+            </tr>
+            <tr>
+                <td class="center-col">{h}</td>
+                <td>API-3 Linear Benchmark</td>
+                <td class="num-col">{api3.get('precision', 0):.2%}</td>
+                <td class="num-col">{api3.get('recall', 0):.2%}</td>
+                <td class="num-col">{api3.get('f1_score', 0):.2%}</td>
+                <td class="num-col">{api3.get('f2_score', 0):.2%}</td>
+                <td class="num-col">{api3.get('roc_auc', 0):.4f}</td>
+                <td class="num-col">{api3.get('false_positives', 0)}</td>
+                <td class="num-col">{api3.get('false_negatives', 0)}</td>
+            </tr>
+            """)
+    table_rows_html = "\n".join(table_rows)
+
     html_content = (
         html_template
         .replace("{{LOGO}}", logo)
@@ -596,6 +561,8 @@ To close the critical "last-mile" communication gap, JalDrishti automatically sy
         .replace("{{IMG4}}", img4)
         .replace("{{IMG5}}", img5)
         .replace("{{IMG6}}", img6)
+        .replace("{{METRICS_TABLE_ROWS}}", table_rows_html)
+        .replace("{{LATENCY_BLOCK}}", latency_block)
     )
 
     print("Compiling PDF with Playwright Chromium...")
