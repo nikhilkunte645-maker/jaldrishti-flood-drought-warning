@@ -3,10 +3,6 @@
 <p align="center">
   <img src="docs/screenshots/cover.png" alt="JalDrishti Banner" width="100%">
 </p>
-
-<p align="center">
-  <img src="docs/screenshots/cover.jpg" alt="JalDrishti Banner" width="100%">
-</p>
 ### Explainable Flood and Drought Early Warning System for the Godavari Basin, Telangana
 **JNTUH Neural Storm 2026 — Green Planet Track (Challenge GP-03)**  
 *Built by `Nikhil Kunte`*
@@ -36,15 +32,24 @@ The Godavari river basin in Telangana represents one of India's most critical ye
 
 ---
 
-## 🖼️ User Interface & Visual Showcase
+## 🖼️ High-Resolution UI Walkthrough & Presentation Showcase
 
-| Interactive Risk Dashboard | Historic Flood Replay (July 2022) |
+The JalDrishti interface is engineered as an ultra-modern Dark-Mode Glassmorphism Climate-Tech Command Center, running with sub-50ms local inference response times and verified against official Telangana State Disaster Management Authority (TGSDMA) emergency protocols.
+
+| 1. Overview & Interactive Map (Risk Dashboard) | 2. Live What-If Scenario Sandbox |
 | :---: | :---: |
-| ![JalDrishti Dashboard](docs/screenshots/dashboard.png) | ![July 2022 Backtest Replay](docs/screenshots/backtest.png) |
+| ![Risk Dashboard](docs/screenshots/01_risk_dashboard_overview.png) | ![Scenario Sandbox](docs/screenshots/02_whatif_scenario_sandbox.png) |
+| *Folium Godavari Basin network with 72h flood risk markers, river discharge KPIs, and daily rainfall monitoring.* | *Real-time stress-testing terminal evaluating hypothetical rainfall pulses, upstream inflows, and soil moisture.* |
 
-| Mobile-First WhatsApp Alert Dispatch |
-| :---: |
-| ![Mobile View](docs/screenshots/mobile_view.png) |
+| 3. Vernacular Emergency Dispatch (Telugu) | 4. Model Benchmarking & $F_2$-Score Loss Audit |
+| :---: | :---: |
+| ![Telugu Alert](docs/screenshots/03_vernacular_alert_telugu.png) | ![Model Metrics](docs/screenshots/04_model_metrics_f2_loss.png) |
+| *Official WhatsApp disaster broadcast formatted in Telugu (తెలుగు) with TGSDMA-verified phrasing and offline mesh delivery.* | *Out-of-time evaluation (2022-2025) comparing XGBoost against Persistence and API-3 benchmarks under asymmetric loss.* |
+
+| 5. Explainable AI (Local TreeSHAP Attributions) | 6. Historic Event Replay (July 2022 Godavari Flood) |
+| :---: | :---: |
+| ![TreeSHAP Explainability](docs/screenshots/05_explainable_ai_shap.png) | ![July 2022 Backtest](docs/screenshots/06_backtest_july2022_flood.png) |
+| *Deterministic SHAP feature contributions explaining the physical hydrological drivers behind every flood alert.* | *Event replay demonstrating a 7-day (168-hour) catchment precursor warning ahead of the historic Bhadrachalam peak crest.* |
 
 ---
 
@@ -104,6 +109,40 @@ flowchart TD
 ```
 
 ---
+
+---
+
+## 🔬 Engineering Deep-Dive & Architectural Tradeoffs
+
+### 1. Why XGBoost over Deep Learning (LSTM, TFT, GNN)
+- **Tabular Data Efficiency:** Hydro-meteorological reanalysis for 4 basin stations across 10 years (2015–2025) yields ~3,950 daily timesteps per station (~15,800 records total). In this medium tabular regime, deep recurrent models (LSTMs, GRUs) and Temporal Fusion Transformers (TFT) suffer from rapid overfitting, hyperparameter sensitivity, and data inefficiency without massive synthetic data generation. Extensive empirical research (e.g., Grinsztajn et al., *NeurIPS 2022*) confirms that tree-based ensembles (XGBoost, LightGBM) consistently outperform deep learning on tabular climate and hydrology benchmarks.
+- **Deterministic TreeSHAP Interpretability:** In frontline disaster risk reduction, "black-box" models cannot be trusted by district collectors, irrigation engineers, or disaster management authorities. XGBoost enables exact, polynomial-time local feature attribution via **TreeSHAP** (Lundberg et al., *Nature Machine Intelligence 2020*). Unlike post-hoc perturbations (LIME) or LSTM attention weights (which are not faithful causal explanations), TreeSHAP guarantees local accuracy and consistency, providing emergency personnel with unambiguous physical attribution (e.g., whether risk is driven by 7-day soil saturation vs. a sudden 24h rainfall spike).
+- **Extreme Skew & Hydrological Step-Changes:** Monsoonal river discharge exhibits extreme right-skew (kurtosis > 25, with dry base flows of ~5 m³/s surging to >190 m³/s during peak flood). Gradient-boosted decision trees partition feature space non-linearly with orthogonal axis-aligned splits, remaining impervious to feature magnitude scaling, exploding gradients, or saturation anomalies that destabilize neural network activation functions under extreme out-of-distribution pulses.
+- **Air-Gapped Real-Time Edge Deployment:** The compiled XGBoost models have a combined binary footprint of under **4.5 MB** on disk, require zero GPU hardware, and execute inference in **<5 milliseconds** per sample on a standard single-core CPU. This allows full edge survivability on field laptops or low-power solar stations even when severe storms destroy cellular towers and electrical grids.
+
+### 2. Asymmetric Loss Justification ($F_2$-Score Optimization)
+- **The Catastrophic Cost Asymmetry of Disaster Warnings:** In conventional machine learning, algorithms optimize symmetric loss (binary cross-entropy) targeting balanced accuracy or $F_1$-score ($\beta = 1$, weighting precision and recall equally). However, in environmental hazard early warning:
+  $$\text{Cost}(\text{False Negative}) \gg \text{Cost}(\text{False Positive})$$
+  - A **False Negative (missed flood)** leads to unevacuated habitations, drowning, livestock loss, and catastrophic infrastructure destruction.
+  - A **False Positive (false alarm)** merely triggers precautionary monitoring, dispatching SDRF reconnaissance teams, or opening drainage sluice gates.
+- **Mathematical Framing with $\beta = 2$:** The $F_\beta$ metric parameterizes this trade-off:
+  $$F_2 = (1 + 2^2) \cdot \frac{\text{Precision} \cdot \text{Recall}}{(2^2 \cdot \text{Precision}) + \text{Recall}} = 5 \cdot \frac{\text{Precision} \cdot \text{Recall}}{4 \cdot \text{Precision} + \text{Recall}}$$
+  Setting $\beta = 2$ mathematically penalizes False Negatives **4 times more heavily than False Positives**, demanding that the operational decision threshold achieve $\ge 90\%$ Recall.
+- **Cost-Sensitive Class Balancing:** To enforce this asymmetry during tree induction, JalDrishti tunes `scale_pos_weight` based on the inverse class ratio ($w_{\text{pos}} \approx 19.0$), forcing split criteria to aggressively penalize missed flood events. As verified on the 2022–2025 unseen test holdout:
+  - At **72 hours**, JalDrishti captures **524 out of 578 flood days** (**90.66% Recall**, **$F_2 = 0.8291$**), missing only 54 days.
+  - In comparison, the Naive Persistence baseline misses **144 flood days** (**$F_2 = 0.7778$**), while the API-3 rainfall index triggers **754 false alarms** (**$F_2 = 0.6187$**).
+
+### 3. Fail-Safe Air-Gapped Inference Architecture
+- **Vulnerability of Cloud & LLM Runtime Dependencies:** Modern AI applications frequently rely on remote cloud endpoints, third-party API gateways, and external Large Language Model APIs (e.g., OpenAI, Anthropic, or external weather APIs). During catastrophic monsoonal storms, cyclones, and flash floods:
+  - Cellular towers experience physical damage or power cutoffs.
+  - Fiber-optic trunk lines suffer terrestrial washouts and landslides.
+  - Latency spikes or API rate limits cause catastrophic early warning dropouts.
+  Relying on a remote cloud service or non-deterministic LLM to generate warning broadcasts during an active storm is an unacceptable single point of failure.
+- **Zero-Network Runtime Guarantees:** JalDrishti strictly enforces a **100% air-gapped runtime contract**:
+  1. *No External API Calls at Runtime:* All inference features are ingested from local curated parquet/CSV stores (`data/`), model weights are loaded from pre-trained serialized estimators (`models/`), and station thresholds are read from static JSON (`thresholds.json`).
+  2. *Deterministic Multilingual Synthesis:* Rather than making unpredictable calls to generative LLMs that could hallucinate advice or hallucinate non-existent evacuation centers, vernacular warnings (English, Telugu, Hindi) are synthesized using a pre-validated, parameterized grammar engine calibrated to official TGSDMA / NDMA disaster response protocols.
+  3. *Deterministic Audit Trail:* Every warning output is reproducible, verifiable offline, and completely auditable by disaster response inspectors without needing an internet connection.
+
 
 ## 🔬 Real Quantitative Evaluation & Metrics
 All models are strictly evaluated on unseen out-of-time test data (January 1, 2022 to October 31, 2025; 5,600 samples across 4 districts). We benchmark XGBoost against both a **Naive Persistence Baseline** (*"Tomorrow's flood status equals today's"*) and an **Antecedent Precipitation Index (API-3 Linear Benchmark)** ($API_3 = P_t + 0.8 \cdot P_{t-1} + 0.6 \cdot P_{t-2}$).

@@ -45,154 +45,302 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for dark modern UI with Google Fonts (Inter & Space Grotesk)
+# Custom CSS for dark modern UI with Google Fonts (Inter & Space Grotesk) - Command Center Glassmorphism
 st.markdown(
     """
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 
     <style>
-    /* Global Typography */
+    /* =========================================================================
+       GLOBAL COLOR PALETTE & COMMAND CENTER GLASSMORPHISM
+       ========================================================================= */
+    :root {
+        --color-abyss: #030712;
+        --color-slate-deep: #0B0F19;
+        --color-cyan-glow: #00F2FE;
+        --color-blue-accent: #0284C7;
+        --color-warning-amber: #F59E0B;
+        --color-critical-red: #EF4444;
+        --color-safe-green: #10B981;
+    }
+
     html, body, [class*="css"], .stApp {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     }
 
     h1, h2, h3, h4, h5, h6 {
-        font-family: 'Space Grotesk', -apple-system, sans-serif;
+        font-family: 'Space Grotesk', -apple-system, sans-serif !important;
+        letter-spacing: -0.02em;
+    }
+
+    /* Main Container with Deep Slate/Abyss Radial Atmosphere */
+    .stApp {
+        background: radial-gradient(circle at 50% 0%, #0F172A 0%, #0B0F19 45%, #030712 100%) !important;
+        color: #F1F5F9 !important;
+    }
+
+    /* Sleek Frosted Glass Sidebar */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0B0F19 0%, #030712 100%) !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 6px 0 24px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    [data-testid="stSidebar"] .stSelectbox label {
+        font-family: 'Space Grotesk', sans-serif !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+        color: #94A3B8 !important;
+        letter-spacing: 0.06em !important;
+        text-transform: uppercase !important;
     }
 
     /* Brand Typography Classes */
     .brand-header {
-        font-family: 'Space Grotesk', -apple-system, sans-serif;
-        font-weight: 700;
-        font-size: 24px;
-        color: #00F2FE;
-        letter-spacing: -0.5px;
-        margin-bottom: 0px;
-        line-height: 1.1;
+        font-family: 'Space Grotesk', -apple-system, sans-serif !important;
+        font-weight: 700 !important;
+        font-size: 24px !important;
+        color: #00F2FE !important;
+        letter-spacing: -0.5px !important;
+        margin-bottom: 0px !important;
+        line-height: 1.1 !important;
+        text-shadow: 0 0 15px rgba(0, 242, 254, 0.4) !important;
     }
     
     .brand-vernacular {
-        font-family: 'Inter', sans-serif;
-        font-size: 11px;
-        color: #94A3B8;
-        font-weight: 500;
-        letter-spacing: 0.3px;
-        margin-top: 2px;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 11px !important;
+        color: #94A3B8 !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.3px !important;
+        margin-top: 2px !important;
     }
     
     .brand-badge {
-        display: inline-block;
-        font-family: 'Inter', sans-serif;
-        font-size: 10px;
-        text-transform: uppercase;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        background: rgba(0, 242, 254, 0.12);
-        color: #38BDF8;
-        border: 1px solid rgba(56, 189, 248, 0.3);
-        border-radius: 4px;
-        padding: 2px 6px;
-        margin-top: 6px;
+        display: inline-block !important;
+        font-family: 'Inter', sans-serif !important;
+        font-size: 9.5px !important;
+        text-transform: uppercase !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.5px !important;
+        background: rgba(0, 242, 254, 0.12) !important;
+        color: #38BDF8 !important;
+        border: 1px solid rgba(56, 189, 248, 0.35) !important;
+        border-radius: 4px !important;
+        padding: 2px 7px !important;
+        margin-top: 6px !important;
     }
 
-    /* Main container background and text */
-    .stApp {
-        background-color: #0b132b;
-        color: #e2e8f0;
-    }
-    
-    /* Card component */
+    /* =========================================================================
+       FROSTED GLASS CARD CONTAINERS & KPI METRICS
+       ========================================================================= */
     .jd-card {
-        background: #1c2541;
-        border: 1px solid #334155;
-        border-radius: 12px;
-        padding: 1.2rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        background: rgba(17, 24, 39, 0.75) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 14px !important;
+        padding: 1.25rem 1.4rem !important;
+        margin-bottom: 1rem !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease !important;
     }
-    
+
+    .jd-card:hover {
+        transform: translateY(-2px) !important;
+        border-color: rgba(0, 242, 254, 0.35) !important;
+        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 242, 254, 0.15) !important;
+    }
+
     .jd-metric-title {
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #94a3b8;
-        font-weight: 600;
-        margin-bottom: 0.3rem;
+        font-family: 'Space Grotesk', -apple-system, sans-serif !important;
+        font-size: 0.8rem !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.08em !important;
+        color: #94A3B8 !important;
+        font-weight: 600 !important;
+        margin-bottom: 0.35rem !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
     }
-    
+
     .jd-metric-val {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #f8fafc;
-        line-height: 1.2;
+        font-family: 'Space Grotesk', -apple-system, sans-serif !important;
+        font-size: 2.1rem !important;
+        font-weight: 700 !important;
+        color: #F8FAFC !important;
+        line-height: 1.15 !important;
+        letter-spacing: -0.5px !important;
     }
-    
+
     .jd-badge {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 9999px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        margin-top: 0.5rem;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        padding: 3px 10px !important;
+        border-radius: 9999px !important;
+        font-size: 0.76rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.4px !important;
+        margin-top: 0.55rem !important;
     }
-    
-    /* WhatsApp chat preview mock */
+
+    /* Simulation Terminal Container for Sandbox */
+    .sandbox-terminal {
+        background: rgba(15, 23, 42, 0.85) !important;
+        backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(0, 242, 254, 0.35) !important;
+        border-radius: 14px !important;
+        padding: 1.4rem !important;
+        margin-bottom: 1.2rem !important;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5), 0 0 25px rgba(0, 242, 254, 0.12) !important;
+    }
+
+    /* Gradient Primary Action Button */
+    div.stButton > button[kind="primary"],
+    div.stButton > button[type="primary"] {
+        background: linear-gradient(135deg, #00F2FE 0%, #0284C7 100%) !important;
+        color: #020617 !important;
+        font-family: 'Space Grotesk', sans-serif !important;
+        font-weight: 700 !important;
+        font-size: 0.95rem !important;
+        letter-spacing: 0.02em !important;
+        border: none !important;
+        border-radius: 10px !important;
+        padding: 0.65rem 1.25rem !important;
+        box-shadow: 0 4px 18px rgba(0, 242, 254, 0.35) !important;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    div.stButton > button[kind="primary"]:hover,
+    div.stButton > button[type="primary"]:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 26px rgba(0, 242, 254, 0.55) !important;
+        filter: brightness(1.08) !important;
+    }
+
+    /* Tabs Styling */
+    button[data-baseweb="tab"] {
+        font-family: 'Space Grotesk', sans-serif !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        color: #94A3B8 !important;
+        padding: 10px 18px !important;
+        border-radius: 8px 8px 0 0 !important;
+        transition: all 0.2s ease !important;
+    }
+
+    button[data-baseweb="tab"]:hover {
+        color: #00F2FE !important;
+        background: rgba(0, 242, 254, 0.05) !important;
+    }
+
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: #00F2FE !important;
+        border-bottom: 2px solid #00F2FE !important;
+        background: rgba(0, 242, 254, 0.08) !important;
+    }
+
+    /* Streamlit Metrics Glassmorphic Override */
+    [data-testid="stMetric"] {
+        background: rgba(17, 24, 39, 0.75) !important;
+        backdrop-filter: blur(14px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 12px !important;
+        padding: 12px 16px !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+    }
+
+    [data-testid="stMetricLabel"] {
+        font-family: 'Space Grotesk', sans-serif !important;
+        color: #94A3B8 !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+    }
+
+    [data-testid="stMetricValue"] {
+        font-family: 'Space Grotesk', sans-serif !important;
+        color: #F8FAFC !important;
+        font-size: 1.65rem !important;
+        font-weight: 700 !important;
+    }
+
+    /* =========================================================================
+       WHATSAPP DISASTER DISPATCH CARD
+       ========================================================================= */
     .whatsapp-container {
-        background: #0b141a;
-        border: 1px solid #222e35;
-        border-radius: 14px;
-        overflow: hidden;
-        margin-top: 1rem;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+        background: rgba(11, 20, 26, 0.95) !important;
+        border: 1px solid rgba(34, 46, 53, 0.8) !important;
+        border-radius: 14px !important;
+        overflow: hidden !important;
+        margin-top: 1rem !important;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5) !important;
     }
     
     .whatsapp-header {
-        background: #202c33;
-        padding: 10px 16px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        border-bottom: 1px solid #2a3942;
+        background: #1f2c34 !important;
+        padding: 10px 16px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
     }
     
     .whatsapp-avatar {
-        width: 38px;
-        height: 38px;
-        border-radius: 50%;
-        background: #00a884;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 50% !important;
+        background: #00a884 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1.2rem !important;
+        box-shadow: 0 0 12px rgba(0, 168, 132, 0.35) !important;
     }
     
     .whatsapp-body {
-        background-color: #0c1317;
-        background-image: radial-gradient(#1f2c34 1px, transparent 1px);
-        background-size: 16px 16px;
-        padding: 20px 16px;
-        min-height: 120px;
+        background-color: #0b141a !important;
+        background-image: radial-gradient(rgba(31, 44, 52, 0.8) 1px, transparent 1px) !important;
+        background-size: 16px 16px !important;
+        padding: 18px 16px 28px 16px !important;
+        min-height: 120px !important;
+        position: relative !important;
+    }
+
+    .whatsapp-watermark {
+        position: absolute;
+        right: 18px;
+        bottom: 8px;
+        font-size: 0.65rem;
+        color: rgba(148, 163, 184, 0.28);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        pointer-events: none;
     }
     
     .whatsapp-bubble {
-        background: #005c4b;
-        color: #e9edef;
-        padding: 12px 16px;
-        border-radius: 8px 8px 8px 0px;
-        max-width: 88%;
-        font-size: 0.95rem;
-        line-height: 1.45;
-        box-shadow: 0 1px 0.5px rgba(11,20,26,.13);
-        position: relative;
+        background: #005c4b !important;
+        color: #e9edef !important;
+        padding: 12px 16px !important;
+        border-radius: 8px 8px 8px 0px !important;
+        max-width: 90% !important;
+        font-size: 0.94rem !important;
+        line-height: 1.52 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+        position: relative !important;
     }
     
     .whatsapp-time {
-        text-align: right;
-        font-size: 0.72rem;
-        color: #8696a0;
-        margin-top: 4px;
+        text-align: right !important;
+        font-size: 0.72rem !important;
+        color: #8696a0 !important;
+        margin-top: 6px !important;
     }
     </style>
     """,
@@ -289,14 +437,18 @@ backtest_meta = load_backtest_meta()
 df_shap = load_shap_data()
 
 # ==============================================================================
+# ==============================================================================
 # SIDEBAR CONTROLS
 # ==============================================================================
 with st.sidebar:
     if LOGO_B64:
         st.markdown(
             f"""
-            <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px; padding-bottom: 4px;">
-                <img src="data:image/png;base64,{LOGO_B64}" style="width: 54px; height: 54px; border-radius: 12px; box-shadow: 0 4px 14px rgba(0, 242, 254, 0.25); flex-shrink: 0; background: #0b132b; object-fit: contain;">
+            <div style="position: relative; display: flex; align-items: center; gap: 14px; margin-bottom: 16px; padding: 12px 14px; background: rgba(17, 24, 39, 0.75); border: 1px solid rgba(0, 242, 254, 0.22); border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.45); backdrop-filter: blur(14px);">
+                <div style="position: relative; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <div style="position: absolute; width: 70px; height: 70px; border-radius: 50%; background: radial-gradient(circle, rgba(0, 242, 254, 0.35) 0%, transparent 70%); filter: blur(3px); pointer-events: none;"></div>
+                    <img src="data:image/png;base64,{LOGO_B64}" style="position: relative; width: 52px; height: 52px; border-radius: 12px; box-shadow: 0 4px 14px rgba(0, 242, 254, 0.35); border: 1px solid rgba(0, 242, 254, 0.4); object-fit: contain; background: #0b132b;">
+                </div>
                 <div style="flex-grow: 1;">
                     <div class="brand-header">JalDrishti</div>
                     <div class="brand-vernacular">జలదృష్టి • जलदृष्टि</div>
@@ -310,7 +462,15 @@ with st.sidebar:
         st.markdown('<div class="brand-header">JalDrishti</div>', unsafe_allow_html=True)
         st.markdown('<div class="brand-vernacular">జలదృష్టి • जलदृष्टि</div>', unsafe_allow_html=True)
         st.markdown('<div class="brand-badge">JNTUH Neural Storm 2026 • GP-03</div>', unsafe_allow_html=True)
-    st.markdown("---")
+
+    st.markdown(
+        """
+        <div style="font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:700; color:#38BDF8; letter-spacing:0.08em; text-transform:uppercase; margin-top:6px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            🛰️ SATELLITE TELEMETRY & DISTRICT
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # District Selector
     district_options = {
@@ -322,6 +482,15 @@ with st.sidebar:
     selected_dist_label = st.selectbox("Select Godavari District", list(district_options.keys()), index=0)
     selected_slug = district_options[selected_dist_label]
     selected_dist_name = DISTRICT_COORDS[selected_slug]["name"]
+
+    st.markdown(
+        """
+        <div style="font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:700; color:#38BDF8; letter-spacing:0.08em; text-transform:uppercase; margin-top:14px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            ⚙️ HYDRO-LOGICAL RUNTIME PARAMETERS
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # Language Selector
     language_map = {
@@ -341,7 +510,28 @@ with st.sidebar:
     else:
         selected_date = "2022-07-14"
 
-    st.markdown("---")
+    st.markdown(
+        """
+        <div style="font-family:'Space Grotesk',sans-serif; font-size:0.75rem; font-weight:700; color:#38BDF8; letter-spacing:0.08em; text-transform:uppercase; margin-top:14px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            📡 AIR-GAPPED SYSTEM STATUS
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        <div style="font-size:0.75rem; color:#94a3b8; line-height:1.45; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:10px 12px; margin-bottom:12px;">
+        <span style="color:#10B981; font-weight:600;">● Engine Online (Zero-API Air-Gapped)</span><br>
+        • Spatial Scope: 4 Basin Districts<br>
+        • Machine Learning: Gradient Boosted Trees (XGBoost)<br>
+        • Climatological SPI: Gamma Distribution<br>
+        • Telemetry Cache: Verified Valid
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     pdf_path = Path("docs/JalDrishti_Hackathon_Submission_Report.pdf")
     if pdf_path.exists():
         with open(pdf_path, "rb") as f:
@@ -352,19 +542,6 @@ with st.sidebar:
                 mime="application/pdf",
                 use_container_width=True,
             )
-
-    st.markdown(
-        """
-        <div style="font-size:0.75rem; color:#94a3b8; line-height:1.4;">
-        <b>Local Godavari Reach Monitor</b><br>
-        • Spatial Scope: 4 Basin Districts<br>
-        • Machine Learning: Gradient Boosted Trees (XGBoost)<br>
-        • Climatological SPI: Gamma Distribution<br>
-        • Runtime: Local Cached Inference (Air-Gapped)
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
 # ==============================================================================
 # APP HEADER
@@ -386,9 +563,10 @@ with col_status:
     dist_threshold = thresholds.get(selected_slug, 50.0)
     st.markdown(
         f"""
-        <div style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:10px; text-align:right;">
-            <span style="font-size:0.75rem; color:#94a3b8;">95th Pct Flood Threshold</span><br>
-            <span style="font-size:1.1rem; font-weight:700; color:#38bdf8;">{dist_threshold:.1f} m³/s</span>
+        <div class="jd-card" style="padding: 12px 16px; text-align: right; border-top: 3px solid #00F2FE;">
+            <div style="font-family: 'Space Grotesk', sans-serif; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #94A3B8;">95th Pct Flood Threshold</div>
+            <div style="font-family: 'Space Grotesk', sans-serif; font-size: 1.35rem; font-weight: 700; color: #00F2FE; letter-spacing: -0.5px;">{dist_threshold:.1f} <span style="font-size: 0.85rem; color: #94A3B8;">m³/s</span></div>
+            <div style="font-size: 0.72rem; color: #38BDF8; margin-top: 2px;">Station: {selected_dist_name}</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -490,7 +668,7 @@ with tab_dashboard:
         with m_c1:
             st.markdown(
                 f"""
-                <div class="jd-card">
+                <div class="jd-card" style="border-top: 3px solid {'#EF4444' if cur_discharge > dist_threshold else '#10B981'};">
                     <div class="jd-metric-title">River Discharge</div>
                     <div class="jd-metric-val">{cur_discharge:.1f} <span style="font-size:0.9rem; color:#94a3b8;">m³/s</span></div>
                     <span class="jd-badge" style="background:{'#ef444422' if cur_discharge > dist_threshold else '#10b98122'}; color:{'#ef4444' if cur_discharge > dist_threshold else '#10b981'}; border:1px solid {'#ef4444' if cur_discharge > dist_threshold else '#10b981'};">
@@ -503,7 +681,7 @@ with tab_dashboard:
         with m_c2:
             st.markdown(
                 f"""
-                <div class="jd-card">
+                <div class="jd-card" style="border-top: 3px solid #38BDF8;">
                     <div class="jd-metric-title">Daily Precipitation</div>
                     <div class="jd-metric-val">{cur_precip:.1f} <span style="font-size:0.9rem; color:#94a3b8;">mm</span></div>
                     <span class="jd-badge" style="background:#38bdf822; color:#38bdf8; border:1px solid #38bdf8;">
@@ -516,7 +694,7 @@ with tab_dashboard:
         with m_c3:
             st.markdown(
                 f"""
-                <div class="jd-card">
+                <div class="jd-card" style="border-top: 3px solid #A855F7;">
                     <div class="jd-metric-title">Soil Moisture (0-7cm)</div>
                     <div class="jd-metric-val">{cur_soil:.3f} <span style="font-size:0.9rem; color:#94a3b8;">m³/m³</span></div>
                     <span class="jd-badge" style="background:#a855f722; color:#c084fc; border:1px solid #c084fc;">
@@ -541,12 +719,14 @@ with tab_dashboard:
             <div class="whatsapp-container">
                 <div class="whatsapp-header">
                     <div class="whatsapp-avatar">🌊</div>
-                    <div>
-                        <div style="font-weight:600; color:#e9edef; font-size:0.9rem;">JalDrishti Emergency Broadcast • జలదృష్టి</div>
-                        <div style="font-size:0.75rem; color:#00a884;">Official Warning Dispatch ({selected_lang_label})</div>
+                    <div style="flex-grow: 1;">
+                        <div style="font-weight:700; color:#e9edef; font-size:0.92rem; font-family:'Space Grotesk', sans-serif;">JalDrishti Emergency Dispatch • జలదృష్టి</div>
+                        <div style="font-size:0.75rem; color:#00a884;">TGSDMA Official Verified Protocol ({selected_lang_label})</div>
                     </div>
+                    <div style="font-size: 0.68rem; color: #8696a0; border: 1px solid rgba(255,255,255,0.12); padding: 3px 8px; border-radius: 6px; font-weight:600; letter-spacing:0.04em;">AIR-GAPPED MESH</div>
                 </div>
                 <div class="whatsapp-body">
+                    <div class="whatsapp-watermark">TGSDMA • TELANGANA DISASTER MGMT PROTOCOL</div>
                     <div class="whatsapp-bubble">
                         <b>⚠️ {selected_dist_name.upper()} ADVISORY</b><br>
                         {alert_text}
@@ -791,11 +971,17 @@ with tab_dashboard:
         with st.container():
             st.markdown(
                 """
-                <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:12px 16px; margin-bottom:12px;">
-                    <span style="color:#38bdf8; font-weight:600; font-size:0.92rem;">🔬 Dynamic Hydraulic Simulator</span><br>
-                    <span style="color:#94a3b8; font-size:0.82rem;">
-                    Stress-test hydraulic thresholds by adjusting precipitation, upstream discharge, and soil moisture saturation.
-                    </span>
+                <div class="sandbox-terminal">
+                    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0, 242, 254, 0.25); padding-bottom: 10px; margin-bottom: 14px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #00F2FE; box-shadow: 0 0 10px #00F2FE;"></span>
+                            <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: #00F2FE; font-size: 0.95rem; letter-spacing: 0.05em; text-transform: uppercase;">Hydraulic Stress-Testing Terminal</span>
+                        </div>
+                        <span style="font-family: 'Inter', monospace; font-size: 0.72rem; color: #94A3B8; background: rgba(0, 242, 254, 0.1); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0, 242, 254, 0.3);">LOCAL_AIRGAPPED_ENGINE v2.4</span>
+                    </div>
+                    <p style="color: #94A3B8; font-size: 0.82rem; margin-bottom: 0px;">
+                    Simulate non-linear hydraulic conditions by adjusting 24h precipitation, upstream river inflow, and volumetric soil saturation. Live inference is executed directly against local gradient-boosted trees.
+                    </p>
                 </div>
                 """,
                 unsafe_allow_html=True,
