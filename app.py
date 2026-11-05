@@ -1597,11 +1597,20 @@ with tab_operations:
                     E3[Air-Gapped LoRa / VHF Mesh Radio Broadcasts]
                 end
 
-                A1 & A2 & A3 --> B1 & B2 & B3
-                B1 & B2 & B3 --> C1 & C2
-                C1 --> D1 --> D2
+                A1 --> B1
+                A2 --> B2
+                A3 --> B3
+                B1 --> C1
+                B2 --> C1
+                B3 --> C1
+                B1 --> C2
+                B3 --> C2
+                C1 --> D1
+                D1 --> D2
                 C2 --> D2
-                D2 --> E1 & E2 & E3
+                D2 --> E1
+                D2 --> E2
+                D2 --> E3
             ```
 
             #### 🏛️ Target B2G Institutional Customers

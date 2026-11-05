@@ -17,8 +17,11 @@
 ## 📌 Links & Quick Access
 - **Live Streamlit App:** [https://jaldrishti-warning.streamlit.app](https://jaldrishti-warning.streamlit.app)
 - **GitHub Repository:** [https://github.com/nikhilkunte645-maker/jaldrishti-flood-drought-warning](https://github.com/nikhilkunte645-maker/jaldrishti-flood-drought-warning)
-- **Demo Script (2-3 min):** [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md)
-- **Submission Checklist:** [`docs/SUBMISSION_CHECKLIST.md`](docs/SUBMISSION_CHECKLIST.md)
+- **Technical Architecture:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- **B2G Business Model & Pricing:** [`docs/BUSINESS_MODEL.md`](docs/BUSINESS_MODEL.md)
+- **Judge Defense Kit (5 Key Q&As):** [`docs/JUDGE_QA.md`](docs/JUDGE_QA.md)
+- **Presentation Kit (30s Pitch & 2-Min Demo):** [`docs/PRESENTATION_KIT.md`](docs/PRESENTATION_KIT.md)
+- **Full Submission PDF Report:** [`docs/JalDrishti_Hackathon_Submission_Report.pdf`](docs/JalDrishti_Hackathon_Submission_Report.pdf)
 
 ---
 
@@ -28,13 +31,22 @@ The Godavari river basin in Telangana represents one of India's most critical ye
 2. **Acute Post-Monsoon Soil Moisture Deficits:** During dry seasons, unpredictable rainfall leads to agricultural drought, depleting topsoil moisture before crops reach maturity.
 3. **The Communication Last-Mile Failure:** Existing government forecasts are typically issued in English or formal technical Hindi as broad district-level bulletins. Frontline farmers and gram panchayat officials lack **hyper-local lead time**, **explainable reasoning**, and **direct vernacular alerts in their mother tongue (Telugu)**.
 
-**JalDrishti** bridges this critical gap. It is an end-to-end, air-gapped machine learning early warning system that forecasts floods 24h, 48h, and 72h in advance using cost-sensitive XGBoost, computes multi-scalar climatological drought indices (SPI-1, SPI-3, Soil Moisture Z-Score), explains every prediction transparently using TreeSHAP, provides a live **Interactive Scenario Sandbox**, and synthesizes instant, WhatsApp-ready broadcasts in **English, Telugu (తెలుగు), and Hindi (हिन्दी)**.
+**JalDrishti** bridges this critical gap. It is an end-to-end, offline-capable hydro-informatics decision-support platform that:
+- Forecasts riverine inundation 24h, 48h, and 72h in advance using cost-sensitive XGBoost ($F_2$-optimized, **90.66% Recall**).
+- Decouples rapid flood forecasting from seasonal agricultural drought monitoring (**SPI-1, SPI-3 via Gamma fit, Soil Moisture Z-Score**).
+- Explains every prediction transparently using **exact TreeSHAP physical attribution** mapped to natural language.
+- Provides a live **Interactive Scenario Sandbox** running sub-3ms in-memory hydraulic stress-testing.
+- Dispatches instant, WhatsApp-ready broadcasts in **English, Telugu (తెలుగు), and Hindi (हिन्दी)** with tiered civil protection stages.
 
 ---
 
-## 🖼️ High-Resolution UI Walkthrough & Presentation Showcase
+## 🖼️ High-Resolution UI Walkthrough & Decoupled Command Center
 
-The JalDrishti interface is engineered as an ultra-modern Dark-Mode Glassmorphism Climate-Tech Command Center, running with measured 2.33 ms median edge CPU inference latency and verified against official Telangana State Disaster Management Authority (TGSDMA) emergency protocols.
+The JalDrishti interface is engineered as an ultra-modern Dark-Mode Glassmorphism Climate-Tech Command Center, structured into 4 decoupled operational modules:
+- **Tab 1: 🌊 Rapid Flood Inundation (24h - 72h Horizon)** — Live Folium basin map, 24h/48h/72h risk horizon matrix, 30-day hydrograph, TreeSHAP feature attributions, and What-If scenario sandbox.
+- **Tab 2: 🌾 Meteorological & Agricultural Drought (SPI-1 & SPI-3, 30-90 Day Horizon)** — Multi-month climatological drought trajectory, root-zone soil saturation anomalies, and agronomic advisory bulletins.
+- **Tab 3: 🔬 Model Audit, Baseline Comparison & Limitations** — July 2022 Godavari flood backtest replay (7-day precursor warning), out-of-time test benchmarks (2022–2025), and physical system limitations.
+- **Tab 4: 🏛️ Operations, B2G Sustainability & Deployment Roadmap** — Enterprise architecture, public sector procurement model (~₹1.5 Lakhs/district/year), and multi-basin scaling roadmap.
 
 | 1. Overview & Interactive Map (Risk Dashboard) | 2. Live What-If Scenario Sandbox |
 | :---: | :---: |
@@ -44,7 +56,7 @@ The JalDrishti interface is engineered as an ultra-modern Dark-Mode Glassmorphis
 | 3. Vernacular Emergency Dispatch (Telugu) | 4. Model Benchmarking & $F_2$-Score Loss Audit |
 | :---: | :---: |
 | ![Telugu Alert](docs/screenshots/03_vernacular_alert_telugu.png) | ![Model Metrics](docs/screenshots/04_model_metrics_f2_loss.png) |
-| *Official WhatsApp disaster broadcast formatted in Telugu (తెలుగు) with TGSDMA-verified phrasing and offline mesh delivery.* | *Out-of-time evaluation (2022-2025) comparing XGBoost against Persistence and API-3 benchmarks under asymmetric loss.* |
+| *Official WhatsApp disaster broadcast formatted in Telugu (తెలుగు) with tiered civil protection stages and PRO disclaimer.* | *Out-of-time evaluation (2022-2025) comparing XGBoost against Persistence and API-3 benchmarks under asymmetric loss.* |
 
 | 5. Explainable AI (Local TreeSHAP Attributions) | 6. Historic Event Replay (July 2022 Godavari Flood) |
 | :---: | :---: |
@@ -57,55 +69,78 @@ The JalDrishti interface is engineered as an ultra-modern Dark-Mode Glassmorphis
 
 ```mermaid
 flowchart TD
-    subgraph DataIngestion["1. Historical Ingestion (2015-2025)"]
-        OM_Arch["Open-Meteo Archive API<br/>Daily Rain, Temp, Hourly Soil Moisture"]
-        OM_Flood["Open-Meteo Flood API<br/>Daily River Discharge (ECMWF GloFAS)"]
+    subgraph INGESTION["1. Telemetry Ingestion Layer"]
+        A1["Open-Meteo Weather API<br/>(Precipitation, Temp, Soil Moisture)"]
+        A2["ECMWF GloFAS Flood API<br/>(Gridded River Discharge Telemetry)"]
+        A3["Disk Cache (3h TTL)<br/>(data/cache/telemetry_cache.json)"]
+        A4["Offline Parquet/CSV Fixtures<br/>(data/all_districts.csv)"]
     end
 
-    subgraph FeatureEngineering["2. Leakage-Free Hydrological Engineering"]
-        PrecipRoll["Precipitation Rolling Sums<br/>(1d, 3d, 7d, 14d)"]
-        DischargeLags["River Discharge Lags & Surge Rate<br/>(Lags 1, 2, 3 & Diff 1d)"]
-        SoilDynamics["Soil Moisture Saturation & Delta 3d"]
-        ThreshCalc["95th Pct Flood Threshold<br/>(Computed on 2015-2021 Train Years)"]
+    subgraph PREPROC["2. Hydro-Informatics & Feature Engineering"]
+        B1["Antecedent Precipitation Engine<br/>(1d, 3d, 7d, 14d Rolling Sums)"]
+        B2["Hydraulic Lag & Surge Dynamics<br/>(Discharge Lags 1d, 2d, 3d & Delta-1d)"]
+        B3["Root-Zone Saturation Dynamics<br/>(0-7cm Moisture & 3d Wetting Rate)"]
+        B4["Historical 95th Pct Flood Baselines<br/>(Calculated strictly on 2015-2021 Train Split)"]
     end
 
-    subgraph ModelingEngine["3. Dual-Hazard Analytics Engine"]
-        XGB_24["XGBoost 24h Forecaster"]
-        XGB_48["XGBoost 48h Forecaster"]
-        XGB_72["XGBoost 72h Forecaster"]
-        SPI_Engine["Drought Engine: SPI-1 & SPI-3<br/>(Monthly Gamma Fit + Zero-Rain Handling)"]
-        SM_Anomaly["Soil Moisture Anomaly<br/>(Calendar-Month Z-Score)"]
-        SHAP_Engine["Explainable AI Engine<br/>(TreeSHAP Local Attributions)"]
-        SandboxEngine["Interactive Scenario Sandbox<br/>(Live Dynamic Hydraulic Inference)"]
+    subgraph MODELS["3. Dual-Timescale Predictive Core"]
+        C1["XGBoost 24h Classifier<br/>(Cost-Sensitive F2-Optimized)"]
+        C2["XGBoost 48h Classifier<br/>(Cost-Sensitive F2-Optimized)"]
+        C3["XGBoost 72h Classifier<br/>(Cost-Sensitive F2-Optimized)"]
+        C4["Climatological Drought Engine<br/>(SPI-1 & SPI-3 Gamma Fit + Soil Z-Score)"]
+        C5["Interactive Scenario Sandbox<br/>(Live Dynamic In-Memory Inference)"]
     end
 
-    subgraph Presentation["4. Grassroots Vernacular UI"]
-        StreamlitUI["Air-Gapped Streamlit App<br/>(Reads Only Local Files)"]
-        FoliumMap["Interactive Folium Map of Telangana"]
-        WhatsAppBubble["WhatsApp-Style Alert Generator<br/>(English / తెలుగు / हिन्दी)"]
-        BacktestReplay["July 2022 Historic Flood Replay"]
+    subgraph XAI["4. Explainability & Vernacular Natural Language"]
+        D1["Exact TreeSHAP Attribution<br/>(Polynomial-Time Log-Odds Impact)"]
+        D2["Trilingual Translation Matrix<br/>(Telugu, Hindi, English Feature Names)"]
+        D3["Plain-Language Driver Synthesis<br/>(e.g., '72h Cumulative Rain: +28% risk')"]
     end
 
-    OM_Arch --> PrecipRoll
-    OM_Arch --> SoilDynamics
-    OM_Flood --> DischargeLags
-    OM_Flood --> ThreshCalc
+    subgraph DISPATCH["5. Multi-Channel Emergency Dispatch"]
+        E1["State EOC Command Center<br/>(Streamlit Glassmorphism UI)"]
+        E2["Tiered WhatsApp / SMS Payloads<br/>(Stage 1 Alert, Stage 2 Farm Evacuation, Stage 3 Relocation)"]
+        E3["Air-Gapped Mesh Radio Protocols<br/>(LoRa / VHF Packet Format Compatible)"]
+    end
 
-    PrecipRoll --> XGB_24 & XGB_48 & XGB_72
-    DischargeLags --> XGB_24 & XGB_48 & XGB_72
-    SoilDynamics --> XGB_24 & XGB_48 & XGB_72
-    ThreshCalc --> XGB_24 & XGB_48 & XGB_72
+    A1 --> A3
+    A2 --> A3
+    A3 -->|Network Online| B1
+    A3 -->|Network Online| B2
+    A3 -->|Network Online| B3
+    A4 -->|Network Offline Fallback| B1
+    A4 -->|Network Offline Fallback| B2
+    A4 -->|Network Offline Fallback| B3
+    B4 --> C1
+    B4 --> C2
+    B4 --> C3
 
-    PrecipRoll --> SPI_Engine
-    SoilDynamics --> SM_Anomaly
-    XGB_72 --> SHAP_Engine
-    XGB_24 & XGB_48 & XGB_72 --> SandboxEngine
+    B1 --> C1
+    B2 --> C1
+    B3 --> C1
+    B1 --> C2
+    B2 --> C2
+    B3 --> C2
+    B1 --> C3
+    B2 --> C3
+    B3 --> C3
+    B1 --> C4
+    B3 --> C4
+    C1 --> C5
+    C2 --> C5
+    C3 --> C5
 
-    XGB_24 & XGB_48 & XGB_72 --> StreamlitUI
-    SPI_Engine & SM_Anomaly --> StreamlitUI
-    SHAP_Engine --> StreamlitUI
-    SandboxEngine --> StreamlitUI
-    StreamlitUI --> FoliumMap & WhatsAppBubble & BacktestReplay
+    C3 --> D1
+    D1 --> D2
+    D2 --> D3
+
+    C1 --> E1
+    C2 --> E1
+    C3 --> E1
+    C4 --> E1
+    D3 --> E2
+    E1 --> E2
+    E1 --> E3
 ```
 
 ---
